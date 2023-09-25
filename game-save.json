@@ -1,7 +1,7 @@
 {
   "SaveName": "Seasons",
-  "EpochTime": 1695578726,
-  "Date": "9/24/2023 1:05:26 PM",
+  "EpochTime": 1695664295,
+  "Date": "9/25/2023 12:51:35 PM",
   "VersionNumber": "v13.2.2",
   "GameMode": "Seasons",
   "GameType": "Game",
@@ -287,8 +287,8 @@
         "normalized": "beginner2"
       },
       {
-        "displayed": "",
-        "normalized": ""
+        "displayed": "unused",
+        "normalized": "unused"
       },
       {
         "displayed": "beginner4",
@@ -381,7 +381,7 @@
       "Size": 3.5
     }
   ],
-  "LuaScript": "WorkshopId = '3035709037'\r\nsettings = {\r\n    difficulty = 'advanced',\r\n    enchantedKingdom = true,\r\n    pathOfDestiny = true,\r\n    promos = true,\r\n    enchantmentCards = true,\r\n    specialAbilityTokens = true,\r\n    setupComplete = false,\r\n    playerTurn = 'White',\r\n    changingTurns = false,\r\n    enchantmentCard = ''\r\n}\r\n\r\nDrawPilePos = {-5.00, 2.5, -6.50}\r\nDiscardPilePos = {-2.00, 2.5, -6.50}\r\nCards = nil\r\nPlayers = {\r\n    White = {\r\n        FirstPlayer = {-0.60, 1, -16.50},\r\n        SpecialR = { 0.00, 180.00, 0.00 },\r\n        TableauX = { 6.15, 9.15, 12.15, 15.15, 18.15 },\r\n        TableauZ = { -2.38, -6.49, -10.57 }\r\n    },\r\n    Pink = {\r\n        FirstPlayer = {-31.71, 1, -16.50},\r\n        SpecialR = { 0.00, 180.00, 0.00 },\r\n        TableauX = {-25.07, -22.07, -19.07, -16.07, -13.07 },\r\n        TableauZ = {-2.38, -6.49, -10.57 }\r\n    },\r\n    Orange = {\r\n        FirstPlayer = {-6.86, 1, 16.99},\r\n        SpecialR = { 0.00, 0.00, 0.00 },\r\n        TableauX = { -13.07, -16.07, -19.07, -22.07, -25.07 },\r\n        TableauZ = { 3.30, 7.42, 11.52 }\r\n    },\r\n    Yellow = {\r\n        FirstPlayer = {24.45, 1, 16.99},\r\n        SpecialR = { 0.00, 0.00, 0.00 },\r\n        TableauX = { 18.15, 15.15, 12.15, 9.15, 6.15 },\r\n        TableauZ = { 3.30, 7.42, 11.52 }\r\n    }\r\n}\r\n\r\nDrawDeckZone = nil\r\nDiceBag = nil\r\nUtility = nil\r\nEnchantmentScript = nil\r\nDiceRollerScript = nil\r\nSpecialAbilityScript = nil\r\nDraftScript = nil\r\nDataScript = nil\r\n\r\nfunction onLoad(saveState)\r\n    DrawDeckZone = getObjectFromGUID('00a61b')\r\n    DiceBag = getObjectFromGUID('01d261')\r\n    DataScript = getObjectFromGUID('97996f')\r\n    Utility = getObjectFromGUID('47fd87')\r\n    EnchantmentScript = getObjectFromGUID('8bb3b2')\r\n    DiceRollerScript = getObjectFromGUID('17754c')\r\n    SpecialAbilityScript = getObjectFromGUID('a3ee11')\r\n    DraftScript = getObjectFromGUID('0f55a3')\r\n    Cards = DataScript.getTable('Cards')\r\n\r\n    local loadedData = JSON.decode(saveState)\r\n    if loadedData ~= nil then\r\n        settings = loadedData\r\n    end\r\n\r\n    math.randomseed(os.time())\r\n    -- Set items uninteractable\r\n    for key, object in ipairs(getObjectsWithTag('noninteractable')) do\r\n        object.interactable = false\r\n    end\r\n\r\n    if settings.setupComplete == false then\r\n        setupMenu('true')\r\n        yellowPrint('Hidden zone opacity can be changed in Menu -> Configuration -> Interface -> Misc. Settings -> Hidden Zone Hide Opacity.')\r\n        print('Players may choose a specific Enchantment card and place it in the Enchantment card slot. If not, an Enchantment card will be randomly selected.')\r\n    end\r\nend\r\n\r\nfunction onSave()\r\n    return JSON.encode(settings)\r\nend\r\n\r\nfunction onPlayerTurn(player, previous_player)\r\n    if settings.setupComplete == false then return end\r\n    if settings.playerTurn == player.color and settings.changingTurns == false then\r\n        local next = Turns.getNextTurnColor()\r\n        settings.changingTurns = true\r\n        settings.playerTurn = next\r\n        Turns.turn_color = next\r\n        moveFirstPlayerToken()\r\n        print('First player moves to the next player.')\r\n        startNewRound()\r\n    else\r\n        settings.changingTurns = false\r\n    end\r\nend\r\n\r\nfunction setupMenu(value)\r\n    UI.setAttribute('optionsMenu1', 'active', value)\r\n    UI.setAttribute('optionsMenu2', 'active', value)\r\n    UI.setAttribute('optionsMenu3', 'active', value)\r\nend\r\n\r\nfunction startingPlayerMenu(value)\r\n    UI.setAttribute('startPlayerMenu', 'active', value)\r\n    UI.setAttribute('startPlayerMenuButtons', 'active', value)\r\nend\r\n\r\nfunction gatherItemsMenu(value)\r\n    UI.setAttribute('gatherItemsMenu', 'active', 'true')\r\nend\r\n\r\nfunction uiToggle(player, value, id)\r\n    if id == 'beginner' or id == 'intermediate' or id == 'advanced' then\r\n        if value == 'True' then\r\n            settings.difficulty = id\r\n        end\r\n    else\r\n        if value == 'True' then\r\n            settings[id] = true\r\n        else\r\n            settings[id] = false\r\n        end\r\n    end\r\nend\r\n\r\nfunction setup()\r\n    setupMenu('false')\r\n\r\n    if settings.enchantmentCards == true then\r\n        EnchantmentScript.call('dealEnchantmentCard')\r\n    else\r\n        EnchantmentScript.call('removeEnchantment')\r\n    end\r\n    if settings.enchantmentCard == 'Vision of Destiny' then\r\n        DrawPilePos[1] = DrawPilePos[1] - 3\r\n        DiscardPilePos[1] = DiscardPilePos[1] - 3\r\n        local drawDeckPos = DrawDeckZone.getPosition()\r\n        DrawDeckZone.setPosition({drawDeckPos[1] - 3, drawDeckPos[2], drawDeckPos[3]})\r\n        yellowPrint('Vision of Destiny Enchantment')\r\n        yellowPrint('The top two Power cards in the draw pile are systematically revealed and placed in a row next to the draw. The card farthest from the draw is considered to be the top card in the draw, and the other face-up card is deemed the second card in the draw.')\r\n    end\r\n\r\n    local baseDeck = getObjectsWithAllTags({'Deck', 'base'})[1]\r\n\r\n    if settings.difficulty == 'intermediate' or settings.difficulty == 'beginner' then\r\n        for index, card in ipairs(baseDeck.getObjects()) do\r\n            local info = Cards[card.name]\r\n            if info.Number < 31 then\r\n                Wait.frames(function()\r\n                    baseDeck.takeObject({\r\n                        guid = card.guid,\r\n                        position = DrawPilePos\r\n                    })\r\n                end, index*3)\r\n            end\r\n        end\r\n    end\r\n    local waitTime = 3\r\n    if settings.difficulty == 'advanced' then\r\n        baseDeck.setPositionSmooth(DrawPilePos)\r\n        waitTime = 1.3\r\n    end\r\n\r\n    Wait.time(function()\r\n        local deck = getDrawDeck()\r\n        if settings.pathOfDestiny == true then\r\n            deck.putObject(getObjectsWithAllTags({'Deck', 'path of destiny'})[1])\r\n        end\r\n        if settings.enchantedKingdom == true then\r\n            deck.putObject(getObjectsWithAllTags({'Deck', 'enchanted kingdom'})[1])\r\n        end\r\n        if settings.promos == true then\r\n            deck.putObject(getObjectsWithAllTags({'promo'})[1])\r\n        end\r\n        Wait.time(function()\r\n            deck.shuffle()\r\n\r\n            if settings.enchantmentCard == 'Vision of Destiny' then\r\n                visionOfDestinyShift()\r\n            end\r\n\r\n            getObjectFromGUID('7982cf').setValue('Prelude')\r\n            yellowPrint('The Prelude phase has begun.')\r\n            if settings.specialAbilityTokens == true then\r\n                SpecialAbilityScript.call('dealSpecialAbilityTokens')\r\n            end\r\n            DraftScript.call('dealStartingHand')\r\n        end, 1.7)\r\n    end, waitTime)\r\nend\r\n\r\nfunction visionOfDestinyShift()\r\n    local deck = getDrawDeck()\r\n\r\n    local topCardText = getObjectFromGUID('0f525b')\r\n    local topCardTextPos = topCardText.getPosition()\r\n    topCardText.setPositionSmooth({topCardTextPos[1], 1, topCardTextPos[3]})\r\n\r\n    local secondDrawText = getObjectFromGUID('1117ad')\r\n    local secondDrawTextPos = secondDrawText.getPosition()\r\n    secondDrawText.setPositionSmooth({secondDrawTextPos[1], 1, secondDrawTextPos[3]})\r\n\r\n    local drawText = getObjectFromGUID('a7ee19')\r\n    local drawTextPos = drawText.getPosition()\r\n    drawText.setPositionSmooth({drawTextPos[1]-3, drawTextPos[2], drawTextPos[3]})\r\n\r\n    local discardText = getObjectFromGUID('adfe86')\r\n    local discardTextPos = discardText.getPosition()\r\n    discardText.setPositionSmooth({discardTextPos[1]+3, discardTextPos[2], discardTextPos[3]})\r\n\r\n    deck.takeObject({\r\n        flip = true,\r\n        position = DiscardPilePos\r\n    })\r\n    deck.takeObject({\r\n        flip = true,\r\n        position = {DiscardPilePos[1]+3, DiscardPilePos[2], DiscardPilePos[3]}\r\n    })\r\n    resetTableGrid()\r\nend\r\n\r\nfunction setLibraryCards()\r\n    getDrawDeck().setName('Draw Deck')\r\n    local deckSize = 3\r\n    if settings.enchantmentCard == 'Extended Experience' then\r\n        deckSize = 4\r\n    end\r\n    print('Players must put ' .. deckSize .. ' cards under library II and ' .. deckSize .. ' cards under library III.')\r\n    if settings.specialAbilityTokens == true then\r\n        printToAll('Players must select their special ability token if they have not yet.', stringColorToRGB('Pink'))\r\n    end\r\n\r\n    startingPlayerMenu('true')\r\nend\r\n\r\nfunction startTournament()\r\n    settings.changingTurns = true\r\n    Turns.turn_color = settings.playerTurn\r\n    getObjectFromGUID('7982cf').setValue('Tournament')\r\n    startingPlayerMenu('false')\r\n    gatherItemsMenu('true')\r\n\r\n    local playerCount = #Player.getPlayers()\r\n    local diceRemovalCount = 4 - playerCount\r\n    local elements = {'air', 'earth', 'fire', 'water'}\r\n\r\n    for index, element in ipairs(elements) do\r\n        for x=1, diceRemovalCount do\r\n            Wait.time(function()\r\n                removeRandomDie(element)\r\n            end, (x - 1) * 1.5)\r\n        end\r\n    end\r\n\r\n    -- sort dice\r\n    Wait.time(function()\r\n        DiceRollerScript.call('returnDice', {'water', 'earth', 'fire', 'air'})\r\n    end, (diceRemovalCount - 1) * 2)\r\n\r\n    settings.setupComplete = true\r\n    yellowPrint('The Tournament has begun.')\r\n    moveFirstPlayerToken()\r\n    startNewRound()\r\nend\r\n\r\nfunction removeRandomDie(element)\r\n    local dice = getObjectsWithAllTags({'Die', element})\r\n    local random = Utility.call('rand', #dice)\r\n    DiceBag.putObject(dice[random])\r\nend\r\n\r\nfunction moveFirstPlayerToken()\r\n    local token = getObjectsWithAllTags({'first player token'})[1]\r\n    token.setPositionSmooth(Players[settings.playerTurn].FirstPlayer)\r\n    token.setRotationSmooth(Players[settings.playerTurn].SpecialR)\r\nend\r\n\r\nfunction startNewRound()\r\n    yellowPrint('Starting a new round.')\r\nend\r\n\r\nfunction startingPlayerSelected(player, value, id)\r\n    local colorOrder = {\r\n        White = 'Pink',\r\n        Pink = 'Orange',\r\n        Orange = 'Yellow',\r\n        Yellow = 'White'\r\n    }\r\n    local nonSeated = Utility.call('getNonSeatedPlayerColors')\r\n    for x=1,3 do\r\n        if has_value(nonSeated, value) == true then\r\n            value = colorOrder[value]\r\n        end\r\n    end\r\n    settings.playerTurn = value\r\nend\r\n\r\nfunction printT(table)\r\n    print(JSON.encode(table))\r\nend\r\n\r\nfunction getDrawDeck()\r\n    return Utility.call('getDeckFromZone', DrawDeckZone)\r\nend\r\n\r\nfunction yellowPrint(message)\r\n    printToAll(message, stringColorToRGB('Yellow'))\r\nend\r\n\r\nTokenBags = {\r\n    air = 'a0c85d',\r\n    fire = 'ecfadc',\r\n    water = 'd2a187',\r\n    earth = 'f61095',\r\n}\r\nTokenBags['decrease energy'] = '9a6508'\r\n\r\nfunction spawnitem(player, b, element)\r\n    local remainingSpace = getRemainingTokenSpace(player.color)\r\n    if remainingSpace == 0 then\r\n        yellowPrint(player.color .. ' has no space left for energy.')\r\n        return\r\n    end\r\n\r\n    moveTokensLeft(player.color)\r\n\r\n    local totalSlots = getTokenSlotCount(player.color)\r\n    local snapPositionIndex = totalSlots - remainingSpace + 1\r\n\r\n    local positions = getPointPositions(player.color)\r\n\r\n    local bag = getObjectFromGUID(TokenBags[element])\r\n    bag.takeObject({\r\n        position = positions[snapPositionIndex],\r\n        rotation = Players[player.color].SpecialR,\r\n        smooth = false\r\n    })\r\n    printToAll(player.color .. ' player gained ' .. element .. ' energy.', stringColorToRGB(player.color))\r\nend\r\n\r\nfunction despawnitem(player, b, element)\r\n    for _, token in ipairs(getTokens(player.color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag == element then\r\n            destroyObject(token)\r\n            printToAll(player.color .. ' player spent ' .. element .. ' energy.', stringColorToRGB(player.color))\r\n            Wait.frames(function()\r\n                moveTokensLeft(player.color)\r\n            end, 10)\r\n            return\r\n        end\r\n    end\r\n    yellowPrint(player.color .. ' has no ' .. element .. ' energy to spend.')\r\nend\r\n\r\nfunction resetTableGrid()\r\n    getObjectFromGUID('4ee1f2').call('onLoad')\r\nend\r\n\r\nfunction has_value(tab, val)\r\n    for index, value in ipairs(tab) do\r\n        if value == val then\r\n            return true\r\n        end\r\n    end\r\n    return false\r\nend\r\n\r\n\r\n\r\n\r\n\r\n\r\nTokenZones = {\r\n    White = '2b8d13',\r\n    Pink = 'b5eb64',\r\n    Orange = '879ee3',\r\n    Yellow = '4b2d0e'\r\n}\r\nfunction getPointPositions(color)\r\n    local points = {}\r\n    for _, point in ipairs(Global.getSnapPoints()) do\r\n        if has_value(point.tags, color) == true then\r\n            table.insert(points, point.position)\r\n        end\r\n    end\r\n\r\n    local grimoire = nil\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag == 'grimoire' then grimoire = token end\r\n    end\r\n\r\n    if grimoire ~= nil then\r\n        for _, point in ipairs(grimoire.getSnapPoints()) do\r\n            table.insert(points, grimoire.positionToWorld(point.position))\r\n        end\r\n    end\r\n\r\n    return points\r\nend\r\n\r\nfunction getTokens(color)\r\n    local zone = getObjectFromGUID(TokenZones[color])\r\n    return zone.getObjects()\r\nend\r\n\r\nfunction getTokenCount(color)\r\n    local count = {\r\n        air = 0,\r\n        fire = 0,\r\n        water = 0,\r\n        earth = 0,\r\n        grimoire = 0\r\n    }\r\n    count['decrease energy'] = 0\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        count[tag] = count[tag] + 1\r\n    end\r\n    return count\r\nend\r\n\r\nfunction getRemainingTokenSpace(color)\r\n    local count = getTokenCount(color)\r\n    local total = count.air + count.fire + count.water + count.earth + count['decrease energy']\r\n    local max = 7\r\n    if count.grimoire > 0 then max = 10 end\r\n    return max - total\r\nend\r\n\r\nfunction hasGrimoire(color)\r\n    return getTokenCount(color).grimoire > 0\r\nend\r\n\r\nfunction getTokenSlotCount(color)\r\n    local count = 7\r\n    if hasGrimoire(color) == true then\r\n        count = 10\r\n    end\r\n    return count\r\nend\r\n\r\nfunction moveTokensLeft(color)\r\n    local slot = 1\r\n    local positions = getPointPositions(color)\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag ~= 'grimoire' then\r\n            token.setPositionSmooth(positions[slot])\r\n            slot = slot + 1\r\n        end\r\n    end\r\nend",
+  "LuaScript": "WorkshopId = '3035709037'\r\nsettings = {\r\n    difficulty = 'advanced',\r\n    enchantedKingdom = true,\r\n    pathOfDestiny = true,\r\n    promos = true,\r\n    enchantmentCards = true,\r\n    specialAbilityTokens = true,\r\n    setupComplete = false,\r\n    playerTurn = 'White',\r\n    changingTurns = false,\r\n    enchantmentCard = ''\r\n}\r\n\r\nDrawPilePos = {-5.00, 2.5, -6.50}\r\nDiscardPilePos = {-2.00, 2.5, -6.50}\r\nCards = nil\r\nPlayers = {\r\n    White = {\r\n        FirstPlayer = {-0.60, 1, -16.50},\r\n        SpecialR = { 0.00, 180.00, 0.00 },\r\n        TableauX = { 6.15, 9.15, 12.15, 15.15, 18.15 },\r\n        TableauZ = { -2.38, -6.49, -10.57 }\r\n    },\r\n    Pink = {\r\n        FirstPlayer = {-31.71, 1, -16.50},\r\n        SpecialR = { 0.00, 180.00, 0.00 },\r\n        TableauX = {-25.07, -22.07, -19.07, -16.07, -13.07 },\r\n        TableauZ = {-2.38, -6.49, -10.57 }\r\n    },\r\n    Orange = {\r\n        FirstPlayer = {-6.86, 1, 16.99},\r\n        SpecialR = { 0.00, 0.00, 0.00 },\r\n        TableauX = { -13.07, -16.07, -19.07, -22.07, -25.07 },\r\n        TableauZ = { 3.30, 7.42, 11.52 }\r\n    },\r\n    Yellow = {\r\n        FirstPlayer = {24.45, 1, 16.99},\r\n        SpecialR = { 0.00, 0.00, 0.00 },\r\n        TableauX = { 18.15, 15.15, 12.15, 9.15, 6.15 },\r\n        TableauZ = { 3.30, 7.42, 11.52 }\r\n    }\r\n}\r\n\r\nDrawDeckZone = nil\r\nDiceBag = nil\r\nUtility = nil\r\nEnchantmentScript = nil\r\nDiceRollerScript = nil\r\nSpecialAbilityScript = nil\r\nDraftScript = nil\r\nDataScript = nil\r\nAdvanceTimeScript = nil\r\n\r\nfunction onLoad(saveState)\r\n    AdvanceTimeScript = getObjectFromGUID('9439cf')\r\n    DrawDeckZone = getObjectFromGUID('00a61b')\r\n    DiceBag = getObjectsWithAllTags({'unused'})[1]\r\n    DataScript = getObjectFromGUID('97996f')\r\n    Utility = getObjectFromGUID('47fd87')\r\n    EnchantmentScript = getObjectFromGUID('8bb3b2')\r\n    DiceRollerScript = getObjectFromGUID('17754c')\r\n    SpecialAbilityScript = getObjectFromGUID('a3ee11')\r\n    DraftScript = getObjectFromGUID('0f55a3')\r\n    Cards = DataScript.getTable('Cards')\r\n\r\n    local loadedData = JSON.decode(saveState)\r\n    if loadedData ~= nil then\r\n        settings = loadedData\r\n    end\r\n\r\n    math.randomseed(os.time())\r\n    -- Set items uninteractable\r\n    for key, object in ipairs(getObjectsWithTag('noninteractable')) do\r\n        object.interactable = false\r\n    end\r\n\r\n    if settings.setupComplete == false then\r\n        setupMenu('true')\r\n        yellowPrint('Hidden zone opacity can be changed in Menu -> Configuration -> Interface -> Misc. Settings -> Hidden Zone Hide Opacity.')\r\n        print('Players may choose a specific Enchantment card and place it in the Enchantment card slot. If not, an Enchantment card will be randomly selected.')\r\n    end\r\nend\r\n\r\nfunction onSave()\r\n    return JSON.encode(settings)\r\nend\r\n\r\nfunction onPlayerTurn(player, previous_player)\r\n    if settings.setupComplete == false then return end\r\n    if settings.playerTurn == player.color and settings.changingTurns == false then\r\n        local next = Turns.getNextTurnColor()\r\n        settings.changingTurns = true\r\n        settings.playerTurn = next\r\n        Turns.turn_color = next\r\n        moveFirstPlayerToken()\r\n        AdvanceTimeScript.call('advanceTime')\r\n        print('First player moves to the next player.')\r\n        startNewRound()\r\n    else\r\n        settings.changingTurns = false\r\n    end\r\nend\r\n\r\nfunction setupMenu(value)\r\n    UI.setAttribute('optionsMenu1', 'active', value)\r\n    UI.setAttribute('optionsMenu2', 'active', value)\r\n    UI.setAttribute('optionsMenu3', 'active', value)\r\nend\r\n\r\nfunction startingPlayerMenu(value)\r\n    UI.setAttribute('startPlayerMenu', 'active', value)\r\n    UI.setAttribute('startPlayerMenuButtons', 'active', value)\r\nend\r\n\r\nfunction gatherItemsMenu(value)\r\n    UI.setAttribute('gatherItemsMenu', 'active', 'true')\r\nend\r\n\r\nfunction uiToggle(player, value, id)\r\n    if id == 'beginner' or id == 'intermediate' or id == 'advanced' then\r\n        if value == 'True' then\r\n            settings.difficulty = id\r\n        end\r\n    else\r\n        if value == 'True' then\r\n            settings[id] = true\r\n        else\r\n            settings[id] = false\r\n        end\r\n    end\r\nend\r\n\r\nfunction setup()\r\n    setupMenu('false')\r\n\r\n    if settings.enchantmentCards == true then\r\n        EnchantmentScript.call('dealEnchantmentCard')\r\n    else\r\n        EnchantmentScript.call('removeEnchantment')\r\n    end\r\n    if settings.enchantmentCard == 'Vision of Destiny' then\r\n        DrawPilePos[1] = DrawPilePos[1] - 3\r\n        DiscardPilePos[1] = DiscardPilePos[1] - 3\r\n        local drawDeckPos = DrawDeckZone.getPosition()\r\n        DrawDeckZone.setPosition({drawDeckPos[1] - 3, drawDeckPos[2], drawDeckPos[3]})\r\n        yellowPrint('Vision of Destiny Enchantment')\r\n        yellowPrint('The top two Power cards in the draw pile are systematically revealed and placed in a row next to the draw. The card farthest from the draw is considered to be the top card in the draw, and the other face-up card is deemed the second card in the draw.')\r\n    end\r\n\r\n    local baseDeck = getObjectsWithAllTags({'Deck', 'base'})[1]\r\n\r\n    if settings.difficulty == 'intermediate' or settings.difficulty == 'beginner' then\r\n        for index, card in ipairs(baseDeck.getObjects()) do\r\n            local info = Cards[card.name]\r\n            if info.Number < 31 then\r\n                Wait.frames(function()\r\n                    baseDeck.takeObject({\r\n                        guid = card.guid,\r\n                        position = DrawPilePos\r\n                    })\r\n                end, index*3)\r\n            end\r\n        end\r\n    end\r\n    local waitTime = 3\r\n    if settings.difficulty == 'advanced' then\r\n        baseDeck.setPositionSmooth(DrawPilePos)\r\n        waitTime = 1.3\r\n    end\r\n\r\n    Wait.time(function()\r\n        local deck = getDrawDeck()\r\n        if settings.pathOfDestiny == true then\r\n            deck.putObject(getObjectsWithAllTags({'Deck', 'path of destiny'})[1])\r\n        end\r\n        if settings.enchantedKingdom == true then\r\n            deck.putObject(getObjectsWithAllTags({'Deck', 'enchanted kingdom'})[1])\r\n        end\r\n        if settings.promos == true then\r\n            deck.putObject(getObjectsWithAllTags({'promo'})[1])\r\n        end\r\n        Wait.time(function()\r\n            deck.shuffle()\r\n\r\n            if settings.enchantmentCard == 'Vision of Destiny' then\r\n                visionOfDestinyShift()\r\n            end\r\n\r\n            getObjectFromGUID('7982cf').setValue('Prelude')\r\n            yellowPrint('The Prelude phase has begun.')\r\n            if settings.specialAbilityTokens == true then\r\n                SpecialAbilityScript.call('dealSpecialAbilityTokens')\r\n            end\r\n            DraftScript.call('dealStartingHand')\r\n        end, 1.7)\r\n    end, waitTime)\r\nend\r\n\r\nfunction visionOfDestinyShift()\r\n    local deck = getDrawDeck()\r\n\r\n    local topCardText = getObjectFromGUID('0f525b')\r\n    local topCardTextPos = topCardText.getPosition()\r\n    topCardText.setPositionSmooth({topCardTextPos[1], 1, topCardTextPos[3]})\r\n\r\n    local secondDrawText = getObjectFromGUID('1117ad')\r\n    local secondDrawTextPos = secondDrawText.getPosition()\r\n    secondDrawText.setPositionSmooth({secondDrawTextPos[1], 1, secondDrawTextPos[3]})\r\n\r\n    local drawText = getObjectFromGUID('a7ee19')\r\n    local drawTextPos = drawText.getPosition()\r\n    drawText.setPositionSmooth({drawTextPos[1]-3, drawTextPos[2], drawTextPos[3]})\r\n\r\n    local discardText = getObjectFromGUID('adfe86')\r\n    local discardTextPos = discardText.getPosition()\r\n    discardText.setPositionSmooth({discardTextPos[1]+3, discardTextPos[2], discardTextPos[3]})\r\n\r\n    deck.takeObject({\r\n        flip = true,\r\n        position = DiscardPilePos\r\n    })\r\n    deck.takeObject({\r\n        flip = true,\r\n        position = {DiscardPilePos[1]+3, DiscardPilePos[2], DiscardPilePos[3]}\r\n    })\r\n    resetTableGrid()\r\nend\r\n\r\nfunction setLibraryCards()\r\n    getDrawDeck().setName('Draw Deck')\r\n    local deckSize = 3\r\n    if settings.enchantmentCard == 'Extended Experience' then\r\n        deckSize = 4\r\n    end\r\n    print('Players must put ' .. deckSize .. ' cards under library II and ' .. deckSize .. ' cards under library III.')\r\n    if settings.specialAbilityTokens == true then\r\n        printToAll('Players must select their special ability token if they have not yet.', stringColorToRGB('Pink'))\r\n    end\r\n\r\n    startingPlayerMenu('true')\r\nend\r\n\r\nfunction startTournament()\r\n    settings.changingTurns = true\r\n    Turns.turn_color = settings.playerTurn\r\n\r\n    removeTwistOfFate()\r\n\r\n    getObjectFromGUID('7982cf').setValue('Tournament')\r\n    startingPlayerMenu('false')\r\n    gatherItemsMenu('true')\r\n\r\n    local playerCount = #Player.getPlayers()\r\n    local diceRemovalCount = 4 - playerCount\r\n    local elements = {'air', 'earth', 'fire', 'water'}\r\n\r\n    for index, element in ipairs(elements) do\r\n        for x=1, diceRemovalCount do\r\n            Wait.time(function()\r\n                removeRandomDie(element)\r\n            end, (x - 1) * 1.5)\r\n        end\r\n    end\r\n\r\n    -- sort dice\r\n    Wait.time(function()\r\n        DiceRollerScript.call('returnDice', {'water', 'earth', 'fire', 'air'})\r\n    end, (diceRemovalCount - 1) * 2)\r\n\r\n    settings.setupComplete = true\r\n    yellowPrint('The Tournament has begun.')\r\n    moveFirstPlayerToken()\r\n    startNewRound()\r\nend\r\n\r\nfunction removeTwistOfFate()\r\n -- Remove Twist of Fate on game start\r\n    local deck = getDrawDeck();\r\n    for _, card in ipairs(getDrawDeck().getObjects()) do\r\n        if card.name == 'Twist of Fate' then\r\n            DiceBag.putObject(\r\n                deck.takeObject({guid = card.guid})\r\n            )\r\n        end\r\n    end\r\nend\r\n\r\nfunction removeRandomDie(element)\r\n    local dice = getObjectsWithAllTags({'Die', element})\r\n    local random = Utility.call('rand', #dice)\r\n    DiceBag.putObject(dice[random])\r\nend\r\n\r\nfunction moveFirstPlayerToken()\r\n    local token = getObjectsWithAllTags({'first player token'})[1]\r\n    token.setPositionSmooth(Players[settings.playerTurn].FirstPlayer)\r\n    token.setRotationSmooth(Players[settings.playerTurn].SpecialR)\r\nend\r\n\r\nfunction startNewRound()\r\n    -- yellowPrint('Starting a new round.')\r\nend\r\n\r\nfunction startingPlayerSelected(player, value, id)\r\n    local colorOrder = {\r\n        White = 'Pink',\r\n        Pink = 'Orange',\r\n        Orange = 'Yellow',\r\n        Yellow = 'White'\r\n    }\r\n    local nonSeated = Utility.call('getNonSeatedPlayerColors')\r\n    for x=1,3 do\r\n        if has_value(nonSeated, value) == true then\r\n            value = colorOrder[value]\r\n        end\r\n    end\r\n    settings.playerTurn = value\r\nend\r\n\r\nfunction printT(table)\r\n    print(JSON.encode(table))\r\nend\r\n\r\nfunction getDrawDeck()\r\n    return Utility.call('getDeckFromZone', DrawDeckZone)\r\nend\r\n\r\nfunction yellowPrint(message)\r\n    printToAll(message, stringColorToRGB('Yellow'))\r\nend\r\n\r\nTokenBags = {\r\n    air = 'a0c85d',\r\n    fire = 'ecfadc',\r\n    water = 'd2a187',\r\n    earth = 'f61095',\r\n}\r\nTokenBags['decrease energy'] = '9a6508'\r\n\r\nfunction spawnitem(player, b, element)\r\n    local remainingSpace = getRemainingTokenSpace(player.color)\r\n    if remainingSpace == 0 then\r\n        yellowPrint(player.color .. ' has no space left for energy.')\r\n        return\r\n    end\r\n\r\n    moveTokensLeft(player.color)\r\n\r\n    local totalSlots = getTokenSlotCount(player.color)\r\n    local snapPositionIndex = totalSlots - remainingSpace + 1\r\n\r\n    local positions = getPointPositions(player.color)\r\n\r\n    local bag = getObjectFromGUID(TokenBags[element])\r\n    bag.takeObject({\r\n        position = positions[snapPositionIndex],\r\n        rotation = Players[player.color].SpecialR,\r\n        smooth = false\r\n    })\r\n    printToAll(player.color .. ' player gained ' .. element .. ' energy.', stringColorToRGB(player.color))\r\nend\r\n\r\nfunction despawnitem(player, b, element)\r\n    for _, token in ipairs(getTokens(player.color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag == element then\r\n            destroyObject(token)\r\n            printToAll(player.color .. ' player spent ' .. element .. ' energy.', stringColorToRGB(player.color))\r\n            Wait.frames(function()\r\n                moveTokensLeft(player.color)\r\n            end, 10)\r\n            return\r\n        end\r\n    end\r\n    yellowPrint(player.color .. ' has no ' .. element .. ' energy to spend.')\r\nend\r\n\r\nfunction resetTableGrid()\r\n    getObjectFromGUID('4ee1f2').call('onLoad')\r\nend\r\n\r\nfunction has_value(tab, val)\r\n    for index, value in ipairs(tab) do\r\n        if value == val then\r\n            return true\r\n        end\r\n    end\r\n    return false\r\nend\r\n\r\n\r\n\r\n\r\n\r\n\r\nTokenZones = {\r\n    White = '2b8d13',\r\n    Pink = 'b5eb64',\r\n    Orange = '879ee3',\r\n    Yellow = '4b2d0e'\r\n}\r\nfunction getPointPositions(color)\r\n    local points = {}\r\n    for _, point in ipairs(Global.getSnapPoints()) do\r\n        if has_value(point.tags, color) == true then\r\n            table.insert(points, point.position)\r\n        end\r\n    end\r\n\r\n    local grimoire = nil\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag == 'grimoire' then grimoire = token end\r\n    end\r\n\r\n    if grimoire ~= nil then\r\n        for _, point in ipairs(grimoire.getSnapPoints()) do\r\n            table.insert(points, grimoire.positionToWorld(point.position))\r\n        end\r\n    end\r\n\r\n    return points\r\nend\r\n\r\nfunction getTokens(color)\r\n    local zone = getObjectFromGUID(TokenZones[color])\r\n    return zone.getObjects()\r\nend\r\n\r\nfunction getTokenCount(color)\r\n    local count = {\r\n        air = 0,\r\n        fire = 0,\r\n        water = 0,\r\n        earth = 0,\r\n        grimoire = 0\r\n    }\r\n    count['decrease energy'] = 0\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if token.type ~= 'Dice' then\r\n            count[tag] = count[tag] + 1\r\n        end\r\n    end\r\n    return count\r\nend\r\n\r\nfunction getRemainingTokenSpace(color)\r\n    local count = getTokenCount(color)\r\n    local total = count.air + count.fire + count.water + count.earth + count['decrease energy']\r\n    local max = 7\r\n    if count.grimoire > 0 then max = 10 end\r\n    return max - total\r\nend\r\n\r\nfunction hasGrimoire(color)\r\n    return getTokenCount(color).grimoire > 0\r\nend\r\n\r\nfunction getTokenSlotCount(color)\r\n    local count = 7\r\n    if hasGrimoire(color) == true then\r\n        count = 10\r\n    end\r\n    return count\r\nend\r\n\r\nfunction moveTokensLeft(color)\r\n    local slot = 1\r\n    local positions = getPointPositions(color)\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag ~= 'grimoire' and token.type ~= 'Dice' then\r\n            token.setPositionSmooth(positions[slot])\r\n            slot = slot + 1\r\n        end\r\n    end\r\nend",
   "LuaScriptState": "{\"changingTurns\":false,\"difficulty\":\"advanced\",\"enchantedKingdom\":true,\"enchantmentCard\":\"\",\"enchantmentCards\":true,\"pathOfDestiny\":true,\"playerTurn\":\"White\",\"promos\":true,\"setupComplete\":false,\"specialAbilityTokens\":true}",
   "XmlUI": "<Defaults>\r\n    <Panel\r\n            class=\"score\"\r\n            height=\"50\"\r\n            width=\"50\"\r\n            rectAlignment=\"UpperLeft\" />\r\n    <Panel\r\n            class=\"itemannouncePanel\"\r\n            active=\"false\"\r\n            rectAlignment=\"LowerRight\"\r\n            showAnimation=\"FadeIn\"\r\n            hideAnimation=\"FadeOut\"\r\n            animationDuration=\"0.6\"\r\n            hideAnimationDelay=\"0.5\"\r\n            height=\"100\"\r\n            width=\"300\" />\r\n    <Text\r\n            class=\"itemannounceText\"\r\n            fontSize=\"25\"\r\n            color=\"#FFFFFF\"\r\n            fontstyle=\"Bold\"\r\n            outline=\"#000000\"\r\n            alignment=\"LowerRight\"\r\n            outlinesize=\"1 -1\" />\r\n    <text\r\n            class=\"plusminus\"\r\n            fontSize=\"30\"\r\n            fontStyle=\"Bold\"\r\n            color=\"#000000\"></text>\r\n    <Button\r\n            class=\"spawnbutton\"\r\n            onClick=\"spawnitem()\"\r\n            height=\"50\"\r\n            width=\"50\"\r\n            color=\"rgba(0,0,0,0)\"\r\n            rectAlignment=\"UpperLeft\"></Button>\r\n    <Button\r\n            class=\"despawnbutton\"\r\n            onClick=\"despawnitem()\"\r\n            height=\"50\"\r\n            width=\"50\"\r\n            color=\"rgba(0,0,0,0)\"\r\n            rectAlignment=\"UpperLeft\"\r\n            id=\"spawnwater\"></Button>\r\n</Defaults>\r\n\r\n<TableLayout\r\n        id=\"optionsMenu1\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 430\"\r\n        height=\"40\"\r\n        width=\"340\"\r\n        rowBackgroundColor=\"rgba(0, 0.39, 0.65)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell>\r\n            <Text\r\n                    color=\"white\"\r\n                    fontSize=\"16\">Game Options</Text>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"optionsMenu2\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 40\"\r\n        height=\"390\"\r\n        width=\"340\"\r\n        cellPadding=\"24 0 12 12\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"140\">\r\n        <Cell>\r\n            <ToggleGroup>\r\n                <VerticalLayout>\r\n                    <Text\r\n                            fontStyle=\"Bold\"\r\n                            alignment=\"MiddleLeft\">Difficulty Options</Text>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"beginner\">Apprentice Wizard level (beginner level)</Toggle>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"intermediate\">Magician level (intermediate level)</Toggle>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"advanced\"\r\n                            isOn=\"True\">Archmage level (advanced level)</Toggle>\r\n                </VerticalLayout>\r\n            </ToggleGroup>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"140\">\r\n        <Cell>\r\n            <VerticalLayout>\r\n                <Text\r\n                        fontStyle=\"Bold\"\r\n                        alignment=\"MiddleLeft\">Expansions</Text>\r\n                <VerticalLayout>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"enchantedKingdom\">Enchanted Kingdom</Toggle>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"pathOfDestiny\">Path of Destiny</Toggle>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"promos\">Promos</Toggle>\r\n                </VerticalLayout>\r\n            </VerticalLayout>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"100\">\r\n        <Cell>\r\n            <VerticalLayout>\r\n                <Text\r\n                        fontStyle=\"Bold\"\r\n                        alignment=\"MiddleLeft\">Expansion Components</Text>\r\n                <VerticalLayout>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"enchantmentCards\">Enchantment Cards</Toggle>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"specialAbilityTokens\">Special Ability Tokens</Toggle>\r\n                </VerticalLayout>\r\n            </VerticalLayout>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"10\">\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"optionsMenu3\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        height=\"40\"\r\n        width=\"340\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell>\r\n            <Button\r\n                    onClick=\"setup()\"\r\n                    color=\"Green\"\r\n                    textColor=\"white\"\r\n                    fontSize=\"16\">Setup</Button>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n\r\n<TableLayout\r\n        id=\"startPlayerMenu\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 80\"\r\n        height=\"152\"\r\n        width=\"290\"\r\n        cellPadding=\"15 15 15 15\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"115\">\r\n        <Cell>\r\n            <Text alignment=\"UpperLeft\">Everyone must finish selecting their Library II and Library III cards.\r\n\r\n                Then, select the youngest player as the starting player and click Start Tournament.</Text>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"77\">\r\n        <Cell>\r\n            <Dropdown\r\n                    id=\"StartingPlayer\"\r\n                    onValueChanged=\"startingPlayerSelected\">\r\n                <Option>White</Option>\r\n                <Option>Pink</Option>\r\n                <Option>Orange</Option>\r\n                <Option>Yellow</Option>\r\n            </Dropdown>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"startPlayerMenuButtons\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        height=\"40\"\r\n        width=\"290\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell columnSpan=\"3\">\r\n            <Button\r\n                    onClick=\"startTournament()\"\r\n                    color=\"Green\"\r\n                    textColor=\"white\"\r\n                    fontSize=\"16\">Start Tournament</Button>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n\r\n\r\n\r\n<!-- GatherItemsMenu -->\r\n<Panel\r\n        offsetXY=\"-75 10\"\r\n        id=\"gatherItemsMenu\"\r\n        height=\"205\"\r\n        width=\"100\"\r\n        rectAlignment=\"Lowerright\"\r\n        allowDragging=\"true\"\r\n        returnToOriginalPositionWhenReleased=\"false\"\r\n        active=\"false\">\r\n\r\n    <!-- Water  -->\r\n    <Panel class=\"score\">\r\n        <image\r\n                image=\"water\"\r\n                height=\"50\"\r\n                width=\"50\"\r\n                preserveAspect=\"true\">\r\n            <Button class=\"spawnbutton\" id=\"water\"></Button>\r\n            <text class=\"plusminus\">+</text>\r\n        </image>\r\n    </Panel>\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"52 0\">\r\n        <image\r\n            image=\"water\"\r\n            height=\"50\"\r\n            width=\"50\"\r\n            preserveAspect=\"true\">\r\n            <Button class=\"despawnbutton\" id=\"water\"></Button>\r\n            <text class=\"plusminus\">-</text>\r\n        </image>\r\n    </Panel>\r\n\r\n    <!-- Earth  -->\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"0 -52\">\r\n        <image\r\n                image=\"earth\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button class=\"spawnbutton\" id=\"earth\"></Button>\r\n            <text class=\"plusminus\">+</text>\r\n        </image>\r\n    </Panel>\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"52 -52\">\r\n        <image\r\n                image=\"earth\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button class=\"despawnbutton\" id=\"earth\"></Button>\r\n            <text class=\"plusminus\">-</text>\r\n        </image>\r\n    </Panel>\r\n\r\n    <!-- Fire -->\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"0 -104\">\r\n        <image\r\n                image=\"fire\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n\r\n            <Button class=\"spawnbutton\" id=\"fire\"></Button>\r\n            <text class=\"plusminus\">+</text>\r\n        </image>\r\n    </Panel>\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"52 -104\">\r\n        <image\r\n                image=\"fire\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button class=\"despawnbutton\" id=\"fire\"></Button>\r\n            <text class=\"plusminus\">-</text>\r\n        </image>\r\n    </Panel>\r\n\r\n    <!-- Air -->\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"0 -156\">\r\n        <image\r\n                image=\"air\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button class=\"spawnbutton\" id=\"air\"></Button>\r\n            <text class=\"plusminus\">+</text>\r\n        </image>\r\n    </Panel>\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"52 -156\">\r\n        <image\r\n                image=\"air\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button\r\n                    class=\"despawnbutton\"\r\n                    id=\"air\"></Button>\r\n            <text class=\"plusminus\">-</text>\r\n        </image>\r\n    </Panel>\r\n</Panel>\r\n\r\n\r\n<!-- Item Announcer -->\r\n<Panel\r\n        id=\"ItemAnnounce1\"\r\n        class=\"itemannouncePanel\"\r\n        offsetXY=\"-20 330\">\r\n    <Text\r\n            class=\"itemannounceText\"\r\n            id=\"item1\">item</Text>\r\n</Panel>\r\n<Panel\r\n        id=\"ItemAnnounce2\"\r\n        class=\"itemannouncePanel\"\r\n        offsetXY=\"-20 300\">\r\n    <Text\r\n            class=\"itemannounceText\"\r\n            id=\"item2\">item</Text>\r\n</Panel>\r\n<Panel\r\n        id=\"ItemAnnounce3\"\r\n        class=\"itemannouncePanel\"\r\n        offsetXY=\"-20 270\">\r\n    <Text\r\n            class=\"itemannounceText\"\r\n            id=\"item3\">item</Text>\r\n</Panel>",
   "CustomUIAssets": [
@@ -588,7 +588,7 @@
       "Rotation": {
         "x": 1.11426509E-07,
         "y": 180.021729,
-        "z": -4.59495375E-08
+        "z": -4.5949605E-08
       }
     },
     {
@@ -932,9 +932,9 @@
         "z": -15.9098186
       },
       "Rotation": {
-        "x": 2.8215316E-05,
+        "x": 2.82153778E-05,
         "y": 180.021484,
-        "z": -0.000183528
+        "z": -0.000183528275
       }
     },
     {
@@ -986,7 +986,7 @@
       "Rotation": {
         "x": -0.000176037371,
         "y": 179.963638,
-        "z": -0.0002321819
+        "z": -0.00023218141
       },
       "Tags": [
         "water",
@@ -1064,7 +1064,7 @@
         "z": -14.4003315
       },
       "Rotation": {
-        "x": -1.52413884E-06,
+        "x": -1.524141E-06,
         "y": 179.9696,
         "z": -2.14577062E-06
       },
@@ -1171,7 +1171,7 @@
         "z": -6.640216
       },
       "Rotation": {
-        "x": -1.18257084E-07,
+        "x": -1.18257326E-07,
         "y": 180.021912,
         "z": -1.40597521E-07
       }
@@ -2251,7 +2251,7 @@
         "z": -6.496402
       },
       "Rotation": {
-        "x": -2.30045512E-08,
+        "x": -2.30045849E-08,
         "y": 180.0223,
         "z": -1.10506214E-07
       }
@@ -2263,9 +2263,9 @@
         "z": -6.496402
       },
       "Rotation": {
-        "x": -6.06543971E-09,
+        "x": -6.065448E-09,
         "y": 180.0223,
-        "z": -9.825448E-08
+        "z": -9.825462E-08
       }
     },
     {
@@ -2277,7 +2277,7 @@
       "Rotation": {
         "x": 3.49847475E-08,
         "y": 180.0223,
-        "z": -5.80845381E-08
+        "z": -5.808466E-08
       }
     },
     {
@@ -2290,6 +2290,66 @@
         "x": -5.677114E-08,
         "y": 180.0223,
         "z": -1.29763052E-07
+      }
+    },
+    {
+      "Position": {
+        "x": 2.19,
+        "y": 0.9611349,
+        "z": 3.33
+      },
+      "Rotation": {
+        "x": 270.0,
+        "y": -0.0009806795,
+        "z": 0.0
+      }
+    },
+    {
+      "Position": {
+        "x": 5.967664,
+        "y": 0.9611349,
+        "z": -14.34134
+      },
+      "Rotation": {
+        "x": 6.136111E-08,
+        "y": -3.371949E-09,
+        "z": -7.066412E-08
+      }
+    },
+    {
+      "Position": {
+        "x": -25.26,
+        "y": 0.9611349,
+        "z": -14.34
+      },
+      "Rotation": {
+        "x": 1.95207562E-07,
+        "y": 5.713989E-06,
+        "z": -2.784765E-07
+      }
+    },
+    {
+      "Position": {
+        "x": -13.42,
+        "y": 0.9611349,
+        "z": 15.02
+      },
+      "Rotation": {
+        "x": 1.94001231E-07,
+        "y": -3.05564329E-09,
+        "z": -3.0925537E-07
+      }
+    },
+    {
+      "Position": {
+        "x": 17.77,
+        "y": 0.9611349,
+        "z": 15.02
+      },
+      "Rotation": {
+        "x": 2.67912E-07,
+        "y": -3.14394666E-09,
+        "z": -2.61310731E-07
       }
     }
   ],
@@ -4976,11 +5036,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": 21.2872658,
-        "posY": 0.924506545,
+        "posY": 0.9245064,
         "posZ": -12.5990629,
-        "rotX": 6.814004E-06,
+        "rotX": 4.52839731E-06,
         "rotY": 180.000122,
-        "rotZ": -6.20365427E-06,
+        "rotZ": -1.15440134E-05,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -4994,9 +5054,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178377092,
-        "g": 0.1850763,
-        "b": 0.238669515
+        "r": 0.178376526,
+        "g": 0.18507573,
+        "b": 0.238668919
       },
       "Tags": [
         "ii",
@@ -5049,9 +5109,9 @@
         "posX": 24.4938641,
         "posY": 0.9245064,
         "posZ": -12.5937443,
-        "rotX": 9.924831E-07,
+        "rotX": -1.93719575E-06,
         "rotY": 180.000061,
-        "rotZ": 7.407749E-08,
+        "rotZ": -1.39859321E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -5065,9 +5125,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178377092,
-        "g": 0.1850763,
-        "b": 0.238669515
+        "r": 0.178376526,
+        "g": 0.18507573,
+        "b": 0.238668919
       },
       "Tags": [
         "iii",
@@ -5203,7 +5263,7 @@
           "Rotation": {
             "x": 0.000183885582,
             "y": 179.989426,
-            "z": -0.000185141675
+            "z": -0.000185141951
           }
         },
         {
@@ -5359,9 +5419,9 @@
         "posX": -2.531734,
         "posY": 1.199653,
         "posZ": 4.338665,
-        "rotX": -1.5035555E-06,
+        "rotX": 4.74469346E-07,
         "rotY": 16.20105,
-        "rotZ": 2.114285E-07,
+        "rotZ": -1.37680763E-06,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -5375,9 +5435,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.228216469,
-        "g": 0.228216469,
-        "b": 0.228216469
+        "r": 0.228215873,
+        "g": 0.228215873,
+        "b": 0.228215873
       },
       "Tags": [
         "round marker"
@@ -5425,7 +5485,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -5495,7 +5555,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.383102119
+        "b": 0.383101523
       },
       "Tags": [
         "destiny"
@@ -5565,7 +5625,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -5635,7 +5695,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -5703,9 +5763,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.344945371,
-        "g": 0.344945371,
-        "b": 0.344945371,
+        "r": 0.344944775,
+        "g": 0.344944775,
+        "b": 0.344944775,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -5826,9 +5886,9 @@
             "z": -0.217036173
           },
           "Rotation": {
-            "x": 0.000226183911,
+            "x": 0.0002261844,
             "y": 359.973236,
-            "z": -0.000216150467
+            "z": -0.000216150744
           }
         },
         {
@@ -5838,7 +5898,7 @@
             "z": -0.3286066
           },
           "Rotation": {
-            "x": 0.000206613578,
+            "x": 0.000206613855,
             "y": 359.97464,
             "z": -0.000190404389
           }
@@ -5852,7 +5912,7 @@
           "Rotation": {
             "x": 0.00020607152,
             "y": 359.9751,
-            "z": -0.000190922641
+            "z": -0.000190922918
           }
         },
         {
@@ -5864,7 +5924,7 @@
           "Rotation": {
             "x": 0.000196180059,
             "y": 359.5958,
-            "z": -0.0001809192
+            "z": -0.00018091948
           }
         },
         {
@@ -5874,7 +5934,7 @@
             "z": -0.546610236
           },
           "Rotation": {
-            "x": 0.000197548216,
+            "x": 0.000197548492,
             "y": 359.969238,
             "z": -0.000184403834
           }
@@ -5900,7 +5960,7 @@
           "Rotation": {
             "x": 0.000220511822,
             "y": 359.974365,
-            "z": -0.000217424662
+            "z": -0.000217424938
           }
         },
         {
@@ -5910,9 +5970,9 @@
             "z": -0.216525152
           },
           "Rotation": {
-            "x": 0.000238927285,
+            "x": 0.00023892778,
             "y": 359.975342,
-            "z": -0.0002184849
+            "z": -0.000218485176
           }
         },
         {
@@ -5922,9 +5982,9 @@
             "z": -0.64711
           },
           "Rotation": {
-            "x": 0.000218141489,
-            "y": 0.0304718614,
-            "z": -0.000225106458
+            "x": 0.000218141766,
+            "y": 0.0304719247,
+            "z": -0.000225105963
           }
         },
         {
@@ -5936,7 +5996,7 @@
           "Rotation": {
             "x": 0.000224521733,
             "y": 359.9751,
-            "z": -0.000218212284
+            "z": -0.000218212561
           }
         },
         {
@@ -5948,7 +6008,7 @@
           "Rotation": {
             "x": 0.00023722506,
             "y": 359.9731,
-            "z": -0.000216025874
+            "z": -0.00021602615
           }
         },
         {
@@ -5958,9 +6018,9 @@
             "z": -0.6977042
           },
           "Rotation": {
-            "x": 0.000215477849,
+            "x": 0.000215478125,
             "y": 359.97406,
-            "z": -0.000217090419
+            "z": -0.0002170907
           }
         },
         {
@@ -5982,7 +6042,7 @@
             "z": -0.726439059
           },
           "Rotation": {
-            "x": 0.000225874042,
+            "x": 0.000225874537,
             "y": 0.01903512,
             "z": -0.000239716188
           }
@@ -6008,7 +6068,7 @@
           "Rotation": {
             "x": 0.000253165839,
             "y": 359.972321,
-            "z": -0.000242467082
+            "z": -0.000242467577
           }
         },
         {
@@ -6018,9 +6078,9 @@
             "z": -0.547135532
           },
           "Rotation": {
-            "x": 0.000198804017,
+            "x": 0.0001988043,
             "y": 359.9706,
-            "z": -0.000185920013
+            "z": -0.000185919518
           }
         },
         {
@@ -6042,7 +6102,7 @@
             "z": -0.7318672
           },
           "Rotation": {
-            "x": 0.000218539819,
+            "x": 0.000218540314,
             "y": 359.969666,
             "z": -0.000239533168
           }
@@ -6460,9 +6520,9 @@
             "z": -0.302327424
           },
           "Rotation": {
-            "x": 0.00023084601,
+            "x": 0.000230845515,
             "y": 179.962234,
-            "z": -0.0002234402
+            "z": -0.000223439711
           }
         },
         {
@@ -6472,7 +6532,7 @@
             "z": -0.374846429
           },
           "Rotation": {
-            "x": 0.000203478761,
+            "x": 0.000203479038,
             "y": 180.02507,
             "z": -0.000183997065
           }
@@ -6486,7 +6546,7 @@
           "Rotation": {
             "x": 0.000171307809,
             "y": 180.027328,
-            "z": -0.000186491161
+            "z": -0.000186491277
           }
         },
         {
@@ -6508,7 +6568,7 @@
             "z": -0.177266046
           },
           "Rotation": {
-            "x": 0.000236180087,
+            "x": 0.000236179592,
             "y": 179.962234,
             "z": -0.000168798142
           }
@@ -6534,7 +6594,7 @@
           "Rotation": {
             "x": 9.71043555E-05,
             "y": 179.961578,
-            "z": -5.87817558E-05
+            "z": -5.87816321E-05
           }
         },
         {
@@ -6544,7 +6604,7 @@
             "z": -0.188486382
           },
           "Rotation": {
-            "x": 0.000232334016,
+            "x": 0.000232333521,
             "y": 179.960571,
             "z": -0.000166945872
           }
@@ -6592,7 +6652,7 @@
             "z": -0.153233483
           },
           "Rotation": {
-            "x": 0.0002244887,
+            "x": 0.0002244882,
             "y": 179.9604,
             "z": -0.000166763552
           }
@@ -6606,7 +6666,7 @@
           "Rotation": {
             "x": 9.821721E-05,
             "y": 179.959808,
-            "z": -5.68093E-05
+            "z": -5.68091746E-05
           }
         },
         {
@@ -6630,7 +6690,7 @@
           "Rotation": {
             "x": 0.000203584845,
             "y": 179.960846,
-            "z": -0.000221879556
+            "z": -0.000221879061
           }
         },
         {
@@ -6652,7 +6712,7 @@
             "z": -0.5594198
           },
           "Rotation": {
-            "x": 0.0002363403,
+            "x": 0.000236339809,
             "y": 179.959961,
             "z": -0.000166281636
           }
@@ -6747,9 +6807,9 @@
             "z": -0.109770417
           },
           "Rotation": {
-            "x": 0.0002013158,
+            "x": 0.00020131607,
             "y": 179.97464,
-            "z": -0.0001952344
+            "z": -0.000195234679
           }
         },
         {
@@ -6773,7 +6833,7 @@
           "Rotation": {
             "x": 0.000201818242,
             "y": 179.9744,
-            "z": -0.000194961467
+            "z": -0.000194961744
           }
         },
         {
@@ -6783,7 +6843,7 @@
             "z": -0.4006478
           },
           "Rotation": {
-            "x": 0.000204043827,
+            "x": 0.0002040441,
             "y": 179.976822,
             "z": -0.0001976632
           }
@@ -6807,7 +6867,7 @@
             "z": -0.5330553
           },
           "Rotation": {
-            "x": 0.000204150536,
+            "x": 0.000204150812,
             "y": 179.970276,
             "z": -0.000217698558
           }
@@ -6843,7 +6903,7 @@
             "z": -0.6905278
           },
           "Rotation": {
-            "x": 0.0002094726,
+            "x": 0.00020947287,
             "y": 179.974472,
             "z": -0.00022236802
           }
@@ -6867,7 +6927,7 @@
             "z": -0.7128147
           },
           "Rotation": {
-            "x": 0.000231266487,
+            "x": 0.000231266982,
             "y": 179.974564,
             "z": -0.000222459421
           }
@@ -6879,7 +6939,7 @@
             "z": -0.7306092
           },
           "Rotation": {
-            "x": 0.000208897429,
+            "x": 0.0002088977,
             "y": 179.974228,
             "z": -0.000249417761
           }
@@ -6891,7 +6951,7 @@
             "z": -0.718739152
           },
           "Rotation": {
-            "x": 0.000216708941,
+            "x": 0.000216709217,
             "y": 179.974579,
             "z": -0.000249810255
           }
@@ -6903,7 +6963,7 @@
             "z": -0.694881
           },
           "Rotation": {
-            "x": 0.000220071262,
+            "x": 0.000220071757,
             "y": 179.973953,
             "z": -0.000221791081
           }
@@ -6915,7 +6975,7 @@
             "z": -0.6447028
           },
           "Rotation": {
-            "x": 0.00018924012,
+            "x": 0.0001892404,
             "y": 179.976639,
             "z": -0.000279409869
           }
@@ -6939,7 +6999,7 @@
             "z": -0.206751809
           },
           "Rotation": {
-            "x": 0.0002007879,
+            "x": 0.00020078817,
             "y": 179.970383,
             "z": -0.0001904968
           }
@@ -6963,9 +7023,9 @@
             "z": -0.234791979
           },
           "Rotation": {
-            "x": 0.0002034462,
+            "x": 0.000203446471,
             "y": 179.976608,
-            "z": -0.0001974125
+            "z": -0.000197412781
           }
         },
         {
@@ -6975,9 +7035,9 @@
             "z": -0.195362017
           },
           "Rotation": {
-            "x": 0.000203751086,
+            "x": 0.000203751362,
             "y": 179.9739,
-            "z": -0.000194409164
+            "z": -0.00019440944
           }
         }
       ]
@@ -6989,9 +7049,9 @@
         "posX": -4.21983433,
         "posY": 1.19950664,
         "posZ": 0.621655,
-        "rotX": -1.39062547E-06,
-        "rotY": 0.0191385113,
-        "rotZ": -2.1449145E-07,
+        "rotX": -1.8883801E-06,
+        "rotY": 0.0191765055,
+        "rotZ": 4.26246736E-08,
         "scaleX": 0.350000441,
         "scaleY": 0.350000441,
         "scaleZ": 0.350000441
@@ -7005,9 +7065,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.228216439,
-        "g": 0.228216439,
-        "b": 0.228216439
+        "r": 0.228215843,
+        "g": 0.228215843,
+        "b": 0.228215843
       },
       "Tags": [
         "year marker"
@@ -7035,11 +7095,11 @@
       "Name": "Bag",
       "Transform": {
         "posX": 35.5708237,
-        "posY": 0.7394723,
+        "posY": 0.7394724,
         "posZ": -10.91473,
-        "rotX": -4.002072E-08,
-        "rotY": -0.00013481619,
-        "rotZ": -6.836855E-08,
+        "rotX": 1.61750009E-07,
+        "rotY": -0.000141973214,
+        "rotZ": -5.669611E-08,
         "scaleX": 1.0,
         "scaleY": 1.0,
         "scaleZ": 1.0
@@ -7079,7 +7139,7 @@
       "Bag": {
         "Order": 0
       },
-      "LuaScript": "Utility = nil\r\n\r\nfunction onLoad()\r\n    Utility = getObjectFromGUID('47fd87')\r\nend\r\n\r\nfunction dealSpecialAbilityTokens()\r\n    self.shuffle()\r\n    local playerColors = Utility.call('getSeatedPlayerColors')\r\n    for _, color in ipairs(playerColors) do\r\n        -- Deal to spaces in front of board\r\n        for x=1,3 do\r\n            local token = self.takeObject({\r\n                position = Utility.call('getTableauPosition', {color = color, slot = x+12}),\r\n                rotation = Global.getTable('Players')[color].SpecialR\r\n            })\r\n            token.addTag(color)\r\n        end\r\n    end\r\n    printToAll('Each player has been randomly dealt 3 Special Ability tokens. After the Prelude, before beginning the Tournament, each player will select one of their Special Ability tokens and place it on their game board.', stringColorToRGB('Pink'))\r\nend",
+      "LuaScript": "Utility = nil\r\n\r\nfunction onLoad()\r\n    Utility = getObjectFromGUID('47fd87')\r\nend\r\n\r\nfunction dealSpecialAbilityTokens()\r\n    self.shuffle()\r\n    local playerColors = Utility.call('getSeatedPlayerColors')\r\n    local settings = Global.getTable('settings')\r\n\r\n    for _, color in ipairs(playerColors) do\r\n        -- Deal to spaces in front of board\r\n        for x=1,3 do\r\n            local token = spawnToken(color, x)\r\n            -- Special Ability 16 requires a Destiny Enhancement\r\n            local hasDestiny = (settings.enchantmentCard == 'Force of Destiny' or settings.enchantmentCard == 'Divine Destiny')\r\n            if token.getName() == '16' and hasDestiny == false then\r\n                getObjectsWithAllTags({'unused'})[1].putObject(token)\r\n                token = spawnToken(color, x)\r\n            end\r\n            token.addTag(color)\r\n        end\r\n    end\r\n    printToAll('Each player has been randomly dealt 3 Special Ability tokens. After the Prelude, before beginning the Tournament, each player will select one of their Special Ability tokens and place it on their game board.', stringColorToRGB('Pink'))\r\nend\r\n\r\nfunction spawnToken(color, x)\r\n    return self.takeObject({\r\n        position = Utility.call('getTableauPosition', {color = color, slot = x+12}),\r\n        rotation = Global.getTable('Players')[color].SpecialR\r\n    })\r\nend",
       "LuaScriptState": "",
       "XmlUI": "",
       "ContainedObjects": [
@@ -8107,18 +8167,18 @@
           "GUID": "f266c3",
           "Name": "Custom_Tile",
           "Transform": {
-            "posX": 35.9321861,
-            "posY": 3.63608718,
-            "posZ": -10.5433388,
-            "rotX": 0.183224544,
-            "rotY": 180.250977,
-            "rotZ": 1.776074,
+            "posX": 36.5729561,
+            "posY": 2.714126,
+            "posZ": -9.996516,
+            "rotX": 359.5614,
+            "rotY": 179.994827,
+            "rotZ": 0.509156466,
             "scaleX": 0.72,
             "scaleY": 1.0,
             "scaleZ": 0.7152412
           },
           "Nickname": "9",
-          "Description": "",
+          "Description": "Move your sorcerer token forward 2 spaces on your summoning gauge. If you use this effect, lose 5 Prestige points at the end of the game.",
           "GMNotes": "",
           "AltLookAngle": {
             "x": 0.0,
@@ -8170,11 +8230,11 @@
       "Name": "Infinite_Bag",
       "Transform": {
         "posX": 30.7106419,
-        "posY": 0.910906434,
+        "posY": 0.910906553,
         "posZ": -13.8427315,
-        "rotX": -8.37763849E-08,
-        "rotY": 0.000111441484,
-        "rotZ": 9.700425E-08,
+        "rotX": -4.25335234E-09,
+        "rotY": 0.000111462432,
+        "rotZ": -6.43015952E-08,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -8279,11 +8339,11 @@
       "Name": "Infinite_Bag",
       "Transform": {
         "posX": 32.58614,
-        "posY": 0.910906553,
+        "posY": 0.9109064,
         "posZ": -13.8427315,
-        "rotX": 5.35027453E-08,
-        "rotY": 0.000128508836,
-        "rotZ": -2.86482233E-08,
+        "rotX": 4.42518768E-08,
+        "rotY": 0.000128510437,
+        "rotZ": 8.518239E-09,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -8388,11 +8448,11 @@
       "Name": "Infinite_Bag",
       "Transform": {
         "posX": 34.4621124,
-        "posY": 0.9109065,
+        "posY": 0.910906434,
         "posZ": -13.8427315,
-        "rotX": 2.096486E-08,
-        "rotY": 0.000192945881,
-        "rotZ": -2.34037945E-08,
+        "rotX": -8.442545E-09,
+        "rotY": 0.000193143365,
+        "rotZ": -3.42665167E-08,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -8497,11 +8557,11 @@
       "Name": "Infinite_Bag",
       "Transform": {
         "posX": 36.3019562,
-        "posY": 0.910906553,
+        "posY": 0.9109064,
         "posZ": -13.8427315,
-        "rotX": -5.71475844E-08,
-        "rotY": 0.000151520551,
-        "rotZ": 1.63333127E-07,
+        "rotX": 1.0195334E-07,
+        "rotY": 0.000151528468,
+        "rotZ": -9.949992E-09,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -8606,11 +8666,11 @@
       "Name": "Infinite_Bag",
       "Transform": {
         "posX": 28.8855782,
-        "posY": 0.9109065,
+        "posY": 0.910906434,
         "posZ": -13.8427315,
-        "rotX": -5.17932435E-08,
-        "rotY": 0.00031020827,
-        "rotZ": -4.23867057E-08,
+        "rotX": -6.423278E-08,
+        "rotY": 0.000310211442,
+        "rotZ": 8.742101E-09,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -8869,10 +8929,10 @@
       "Transform": {
         "posX": 35.752388,
         "posY": 0.9935775,
-        "posZ": -6.640271,
-        "rotX": -4.859778E-09,
+        "posZ": -6.640273,
+        "rotX": 2.757548E-09,
         "rotY": 180.0223,
-        "rotZ": 1.82970314E-08,
+        "rotZ": -7.64075452E-08,
         "scaleX": 1.25,
         "scaleY": 1.0,
         "scaleZ": 1.25
@@ -9552,11 +9612,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": -9.892814,
-        "posY": 0.924506843,
+        "posY": 0.9245067,
         "posZ": -12.6009579,
-        "rotX": -2.26962447E-06,
+        "rotX": -3.66421E-06,
         "rotY": 180.02684,
-        "rotZ": -2.692642E-06,
+        "rotZ": -1.58807211E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -9570,9 +9630,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178377092,
-        "g": 0.1850763,
-        "b": 0.238669515
+        "r": 0.178376526,
+        "g": 0.18507573,
+        "b": 0.238668919
       },
       "Tags": [
         "ii",
@@ -9623,11 +9683,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": -28.2342548,
-        "posY": 0.9245064,
+        "posY": 0.924506366,
         "posZ": 13.5741577,
-        "rotX": -2.07383937E-06,
+        "rotX": 1.6463149E-06,
         "rotY": 359.975739,
-        "rotZ": -1.37666359E-06,
+        "rotZ": -1.39598887E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -9641,9 +9701,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178377092,
-        "g": 0.1850763,
-        "b": 0.238669515
+        "r": 0.178376526,
+        "g": 0.18507573,
+        "b": 0.238668919
       },
       "Tags": [
         "ii",
@@ -9694,11 +9754,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": -6.867074,
-        "posY": 0.924506366,
+        "posY": 0.9245066,
         "posZ": -12.6006851,
-        "rotX": -1.85349066E-07,
+        "rotX": 9.487739E-07,
         "rotY": 180.009186,
-        "rotZ": -3.33003328E-07,
+        "rotZ": 2.29757234E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -9712,9 +9772,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178377092,
-        "g": 0.1850763,
-        "b": 0.238669515
+        "r": 0.178376526,
+        "g": 0.18507573,
+        "b": 0.238668919
       },
       "Tags": [
         "iii",
@@ -9765,11 +9825,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": -31.3077316,
-        "posY": 0.9245064,
+        "posY": 0.924506247,
         "posZ": 13.5741577,
-        "rotX": -1.18771447E-06,
+        "rotX": -2.940585E-06,
         "rotY": 359.984772,
-        "rotZ": 4.685245E-06,
+        "rotZ": 2.85188776E-07,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -9783,9 +9843,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178377092,
-        "g": 0.1850763,
-        "b": 0.238669515
+        "r": 0.178376526,
+        "g": 0.18507573,
+        "b": 0.238668919
       },
       "Tags": [
         "iii",
@@ -9838,9 +9898,9 @@
         "posX": 8.596651,
         "posY": 1.217087,
         "posZ": -15.7348909,
-        "rotX": -1.40364978E-06,
-        "rotY": 0.302888125,
-        "rotZ": 1.19001049E-06,
+        "rotX": -3.27013282E-07,
+        "rotY": 0.302889,
+        "rotZ": 1.43875653E-07,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -9883,9 +9943,9 @@
         "posX": 11.2771072,
         "posY": 1.217087,
         "posZ": -15.6030607,
-        "rotX": -7.619132E-07,
+        "rotX": -5.505471E-07,
         "rotY": 359.974,
-        "rotZ": 5.252647E-07,
+        "rotZ": 4.22045531E-07,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -9928,9 +9988,9 @@
         "posX": -22.8747044,
         "posY": 1.24448466,
         "posZ": -15.7752018,
-        "rotX": -2.71928252E-06,
+        "rotX": -2.90650837E-06,
         "rotY": 359.97348,
-        "rotZ": 3.6930785E-06,
+        "rotZ": -1.78215886E-09,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -9945,7 +10005,7 @@
       },
       "ColorDiffuse": {
         "r": 0.764808357,
-        "g": 0.4063823,
+        "g": 0.4063817,
         "b": 0.7588346
       },
       "LayoutGroupSortIndex": 0,
@@ -9971,11 +10031,11 @@
       "Name": "BlockSquare",
       "Transform": {
         "posX": -18.6338539,
-        "posY": 1.20788991,
+        "posY": 1.20789,
         "posZ": 16.3283043,
-        "rotX": 0.06379214,
-        "rotY": 359.9463,
-        "rotZ": 359.9352,
+        "rotX": 0.06379274,
+        "rotY": 359.942657,
+        "rotZ": 359.935242,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -9991,7 +10051,7 @@
       "ColorDiffuse": {
         "r": 0.9181184,
         "g": 0.633108139,
-        "b": 0.08476957
+        "b": 0.08476908
       },
       "LayoutGroupSortIndex": 0,
       "Value": 0,
@@ -10018,8 +10078,8 @@
         "posX": -15.8964939,
         "posY": 1.20463276,
         "posZ": 16.4853954,
-        "rotX": 0.06381975,
-        "rotY": 359.966461,
+        "rotX": 0.06382245,
+        "rotY": 359.9663,
         "rotZ": 359.935242,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
@@ -10036,7 +10096,7 @@
       "ColorDiffuse": {
         "r": 0.9181184,
         "g": 0.633108139,
-        "b": 0.08476957
+        "b": 0.08476908
       },
       "LayoutGroupSortIndex": 0,
       "Value": 0,
@@ -10063,8 +10123,8 @@
         "posX": 12.7808952,
         "posY": 1.17019618,
         "posZ": 16.3537331,
-        "rotX": 0.06370036,
-        "rotY": 359.863525,
+        "rotX": 0.06369785,
+        "rotY": 359.861,
         "rotZ": 359.93515,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
@@ -10081,7 +10141,7 @@
       "ColorDiffuse": {
         "r": 0.869338036,
         "g": 0.8619713,
-        "b": 0.11055509
+        "b": 0.110554494
       },
       "LayoutGroupSortIndex": 0,
       "Value": 0,
@@ -10105,11 +10165,11 @@
       "GUID": "633e86",
       "Name": "BlockSquare",
       "Transform": {
-        "posX": 15.4892387,
+        "posX": 15.4892511,
         "posY": 1.16696548,
         "posZ": 16.5164528,
-        "rotX": 0.06389275,
-        "rotY": 0.0331221633,
+        "rotX": 0.06388946,
+        "rotY": 0.0318815224,
         "rotZ": 359.935333,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
@@ -10126,7 +10186,7 @@
       "ColorDiffuse": {
         "r": 0.869338036,
         "g": 0.8619713,
-        "b": 0.11055509
+        "b": 0.110554494
       },
       "LayoutGroupSortIndex": 0,
       "Value": 0,
@@ -10153,9 +10213,9 @@
         "posX": -20.14124,
         "posY": 1.24448466,
         "posZ": -15.642724,
-        "rotX": -8.606705E-07,
-        "rotY": 0.0141122211,
-        "rotZ": 3.24156133E-08,
+        "rotX": -9.74984E-07,
+        "rotY": 0.0141119249,
+        "rotZ": 2.14551985E-08,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -10170,7 +10230,7 @@
       },
       "ColorDiffuse": {
         "r": 0.764808357,
-        "g": 0.406382233,
+        "g": 0.406381637,
         "b": 0.7588346
       },
       "LayoutGroupSortIndex": 0,
@@ -10199,7 +10259,7 @@
         "posY": 0.37,
         "posZ": -16.42,
         "rotX": 0.06367877,
-        "rotY": -0.00018142075,
+        "rotY": -0.000181421739,
         "rotZ": 359.9355,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -10262,7 +10322,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.227237642,
+        "r": 0.227237046,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -10294,9 +10354,9 @@
       "GUID": "23ec5f",
       "Name": "3DText",
       "Transform": {
-        "posX": -25.2562561,
-        "posY": 1.127093,
-        "posZ": -15.6006861,
+        "posX": -25.26053,
+        "posY": 1.12705684,
+        "posZ": -15.600749,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -10348,9 +10408,9 @@
       "GUID": "48b274",
       "Name": "3DText",
       "Transform": {
-        "posX": -28.3701115,
-        "posY": -0.9061826,
-        "posZ": -15.5749931,
+        "posX": -28.37069,
+        "posY": -0.9062188,
+        "posZ": -15.5750608,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -10423,7 +10483,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -10539,7 +10599,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.227237612,
+        "r": 0.227237016,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -10592,7 +10652,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.383102119
+        "b": 0.383101523
       },
       "Tags": [
         "destiny"
@@ -10662,7 +10722,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -10732,7 +10792,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -10781,9 +10841,9 @@
       "GUID": "975275",
       "Name": "3DText",
       "Transform": {
-        "posX": 2.62763619,
-        "posY": -0.8503962,
-        "posZ": -15.70077,
+        "posX": 2.62734628,
+        "posY": -0.8504324,
+        "posZ": -15.7008524,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -10835,9 +10895,9 @@
       "GUID": "6c48c5",
       "Name": "3DText",
       "Transform": {
-        "posX": 5.945715,
-        "posY": 1.23397517,
-        "posZ": -15.6702662,
+        "posX": 5.94974327,
+        "posY": 1.233939,
+        "posZ": -15.6703339,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -10908,7 +10968,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.227237612,
+        "r": 0.227237016,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -10978,7 +11038,7 @@
       "HideWhenFaceDown": false,
       "Hands": false,
       "Counter": {
-        "value": 17
+        "value": 0
       },
       "LuaScript": "",
       "LuaScriptState": "",
@@ -10993,7 +11053,7 @@
         "posZ": 17.08,
         "rotX": -9.097785E-08,
         "rotY": 179.502274,
-        "rotZ": -1.4572489E-08,
+        "rotZ": -1.45725494E-08,
         "scaleX": 1.0,
         "scaleY": 1.0,
         "scaleZ": 1.0
@@ -11055,7 +11115,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.227237582,
+        "r": 0.227236986,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -11108,7 +11168,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -11178,7 +11238,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -11248,7 +11308,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -11318,7 +11378,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -11388,7 +11448,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -11458,7 +11518,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843075
+        "b": 0.384306878
       },
       "Tags": [
         "destiny"
@@ -11511,7 +11571,7 @@
         "posY": 1.05182481,
         "posZ": 15.8841476,
         "rotX": 355.294983,
-        "rotY": 0.0503835,
+        "rotY": 0.0503836423,
         "rotZ": -0.0036996,
         "scaleX": 0.425228179,
         "scaleY": 1.0,
@@ -11528,7 +11588,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.383102119
+        "b": 0.383101523
       },
       "Tags": [
         "destiny"
@@ -11598,7 +11658,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.383102119
+        "b": 0.383101523
       },
       "Tags": [
         "destiny"
@@ -11647,8 +11707,8 @@
       "GUID": "50469c",
       "Name": "3DText",
       "Transform": {
-        "posX": 21.1018,
-        "posY": -0.8798502,
+        "posX": 21.101675,
+        "posY": -0.879841149,
         "posZ": 16.2000866,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -11701,8 +11761,8 @@
       "GUID": "90d2d7",
       "Name": "3DText",
       "Transform": {
-        "posX": 17.7731419,
-        "posY": 1.12017369,
+        "posX": 17.7698956,
+        "posY": 1.12019169,
         "posZ": 16.2000866,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -11755,8 +11815,8 @@
       "GUID": "0e1960",
       "Name": "3DText",
       "Transform": {
-        "posX": -10.0942888,
-        "posY": -0.8797024,
+        "posX": -10.0945787,
+        "posY": -0.87969327,
         "posZ": 16.2000866,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -11809,9 +11869,9 @@
       "GUID": "fb6f4f",
       "Name": "3DText",
       "Transform": {
-        "posX": -13.4176292,
-        "posY": 1.12030888,
-        "posZ": 16.2002735,
+        "posX": -13.4204988,
+        "posY": 1.120327,
+        "posZ": 16.2003155,
         "rotX": 90.0,
         "rotY": 180.0,
         "rotZ": 0.0,
@@ -11873,7 +11933,7 @@
         "scaleY": 1.0,
         "scaleZ": 1.0
       },
-      "Nickname": "Unused Dice",
+      "Nickname": "Unused Items",
       "Description": "",
       "GMNotes": "",
       "AltLookAngle": {
@@ -11886,6 +11946,9 @@
         "g": 0.366520882,
         "b": 0.0
       },
+      "Tags": [
+        "unused"
+      ],
       "LayoutGroupSortIndex": 0,
       "Value": 0,
       "Locked": false,
@@ -11917,7 +11980,7 @@
         "posX": 32.79629,
         "posY": 1.13799858,
         "posZ": -2.59023285,
-        "rotX": 4.47791031E-08,
+        "rotX": -7.042735E-08,
         "rotY": 180.0,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -14468,11 +14531,11 @@
       "GUID": "2bd17f",
       "Name": "Deck",
       "Transform": {
-        "posX": 29.7835159,
-        "posY": 1.426841,
-        "posZ": -6.64017773,
-        "rotX": -3.603612E-10,
-        "rotY": 180.0,
+        "posX": 29.78351,
+        "posY": 1.4268409,
+        "posZ": -6.640177,
+        "rotX": 6.7385697E-09,
+        "rotY": 179.999985,
         "rotZ": 180.0,
         "scaleX": 1.25,
         "scaleY": 1.0,
@@ -14651,11 +14714,11 @@
           "Name": "Card",
           "Transform": {
             "posX": 29.7835178,
-            "posY": 1.94322491,
+            "posY": 1.94470048,
             "posZ": -6.64017773,
-            "rotX": 2.18003115E-05,
-            "rotY": 180.000961,
-            "rotZ": 180.000122,
+            "rotX": -0.00295674917,
+            "rotY": 180.000015,
+            "rotZ": 180.013489,
             "scaleX": 1.25,
             "scaleY": 1.0,
             "scaleZ": 1.25
@@ -20791,7 +20854,7 @@
         "posX": 32.79629,
         "posY": 0.9695073,
         "posZ": -6.64022255,
-        "rotX": -5.9025993E-08,
+        "rotX": -5.128203E-08,
         "rotY": 180.0,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -21165,7 +21228,7 @@
         "posX": 35.752388,
         "posY": 1.13799858,
         "posZ": -2.59020233,
-        "rotX": 1.90139549E-08,
+        "rotX": -1.97424654E-08,
         "rotY": 180.0,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -23707,9 +23770,9 @@
       "GUID": "85007e",
       "Name": "3DText",
       "Transform": {
-        "posX": 41.3464928,
-        "posY": 0.9703467,
-        "posZ": 0.7861772,
+        "posX": 41.3466,
+        "posY": 0.970337868,
+        "posZ": 0.786160052,
         "rotX": 90.0,
         "rotY": 90.0,
         "rotZ": 0.0,
@@ -23807,8 +23870,8 @@
       "GUID": "7982cf",
       "Name": "3DText",
       "Transform": {
-        "posX": -3.6101687,
-        "posY": 0.9611492,
+        "posX": -3.61045861,
+        "posY": 0.9611521,
         "posZ": 6.70033455,
         "rotX": 90.0,
         "rotY": 1.15148364E-12,
@@ -23908,13 +23971,13 @@
       "Name": "FogOfWarTrigger",
       "Transform": {
         "posX": 12.2,
-        "posY": 3.48,
+        "posY": 5.5,
         "posZ": -6.38,
         "rotX": 0.0,
         "rotY": 0.0,
         "rotZ": 0.0,
         "scaleX": 17.09,
-        "scaleY": 5.1,
+        "scaleY": 9.15,
         "scaleZ": 11.93
       },
       "Nickname": "",
@@ -23962,13 +24025,13 @@
       "Name": "FogOfWarTrigger",
       "Transform": {
         "posX": -19.0672626,
-        "posY": 3.48,
+        "posY": 5.5,
         "posZ": -6.38,
         "rotX": 0.0,
         "rotY": 0.000149354688,
         "rotZ": 0.0,
         "scaleX": 17.09,
-        "scaleY": 5.1,
+        "scaleY": 9.15,
         "scaleZ": 11.93
       },
       "Nickname": "",
@@ -24016,13 +24079,13 @@
       "Name": "FogOfWarTrigger",
       "Transform": {
         "posX": -19.0672626,
-        "posY": 3.48,
+        "posY": 5.5,
         "posZ": 7.54,
         "rotX": 0.0,
         "rotY": 0.0,
         "rotZ": 0.0,
         "scaleX": 17.09,
-        "scaleY": 5.1,
+        "scaleY": 9.15,
         "scaleZ": 11.93
       },
       "Nickname": "",
@@ -24070,13 +24133,13 @@
       "Name": "FogOfWarTrigger",
       "Transform": {
         "posX": 12.2,
-        "posY": 3.48,
+        "posY": 5.5,
         "posZ": 7.54,
         "rotX": 0.0,
         "rotY": 0.0,
         "rotZ": 0.0,
         "scaleX": 17.09,
-        "scaleY": 5.1,
+        "scaleY": 9.15,
         "scaleZ": 11.93
       },
       "Nickname": "",
@@ -24124,11 +24187,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": 3.08901358,
-        "posY": 0.924506366,
+        "posY": 0.9245064,
         "posZ": 13.5741577,
-        "rotX": -2.02056029E-07,
+        "rotX": -2.44565172E-06,
         "rotY": 359.9758,
-        "rotZ": 2.27726147E-07,
+        "rotZ": 6.70476254E-07,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -24142,9 +24205,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178377092,
-        "g": 0.1850763,
-        "b": 0.238669515
+        "r": 0.178376526,
+        "g": 0.18507573,
+        "b": 0.238668919
       },
       "Tags": [
         "ii",
@@ -24194,12 +24257,12 @@
       "GUID": "fa98e4",
       "Name": "Custom_Tile",
       "Transform": {
-        "posX": 0.0655513853,
-        "posY": 0.924506545,
+        "posX": 0.06555139,
+        "posY": 0.9245066,
         "posZ": 13.5741577,
-        "rotX": 5.448407E-07,
-        "rotY": 0.0242130235,
-        "rotZ": -4.36073044E-08,
+        "rotX": -9.19766137E-07,
+        "rotY": 0.02421473,
+        "rotZ": 1.37964776E-07,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -24213,9 +24276,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178377092,
-        "g": 0.1850763,
-        "b": 0.238669515
+        "r": 0.178376526,
+        "g": 0.18507573,
+        "b": 0.238668919
       },
       "Tags": [
         "iii",
@@ -24265,8 +24328,8 @@
       "GUID": "ae099f",
       "Name": "3DText",
       "Transform": {
-        "posX": 3.08871865,
-        "posY": 0.9300781,
+        "posX": 3.08842874,
+        "posY": 0.9300962,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -24319,8 +24382,8 @@
       "GUID": "7cacdd",
       "Name": "3DText",
       "Transform": {
-        "posX": 0.06871796,
-        "posY": 0.9300764,
+        "posX": 0.06842804,
+        "posY": 0.9300945,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -24373,8 +24436,8 @@
       "GUID": "709559",
       "Name": "3DText",
       "Transform": {
-        "posX": -28.2325268,
-        "posY": 0.930078447,
+        "posX": -28.23311,
+        "posY": 0.930096567,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -24427,8 +24490,8 @@
       "GUID": "beeb1d",
       "Name": "3DText",
       "Transform": {
-        "posX": -31.3125038,
-        "posY": 0.9300782,
+        "posX": -31.3130817,
+        "posY": 0.9300963,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -24481,11 +24544,11 @@
       "GUID": "fdd082",
       "Name": "3DText",
       "Transform": {
-        "posX": -9.884369,
-        "posY": 0.929846942,
-        "posZ": -15.4590473,
+        "posX": -9.884659,
+        "posY": 0.929810762,
+        "posZ": -15.459115,
         "rotX": 90.0,
-        "rotY": 0.893518448,
+        "rotY": 0.8935221,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -24535,11 +24598,11 @@
       "GUID": "89fde0",
       "Name": "3DText",
       "Transform": {
-        "posX": -6.86435747,
-        "posY": 0.9298477,
-        "posZ": -15.4590473,
+        "posX": -6.86464739,
+        "posY": 0.9298115,
+        "posZ": -15.459115,
         "rotX": 90.0,
-        "rotY": 0.893518448,
+        "rotY": 0.8935221,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -24589,11 +24652,11 @@
       "GUID": "ba874d",
       "Name": "3DText",
       "Transform": {
-        "posX": 21.2964745,
-        "posY": 0.929847062,
-        "posZ": -15.4590473,
+        "posX": 21.29635,
+        "posY": 0.9298109,
+        "posZ": -15.459115,
         "rotX": 90.0,
-        "rotY": 0.893518448,
+        "rotY": 0.8935221,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -24644,10 +24707,10 @@
       "Name": "3DText",
       "Transform": {
         "posX": 24.4969311,
-        "posY": 0.929847836,
-        "posZ": -15.4590473,
+        "posY": 0.9298116,
+        "posZ": -15.459115,
         "rotX": 90.0,
-        "rotY": 0.893518448,
+        "rotY": 0.8935221,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -24697,12 +24760,12 @@
       "GUID": "3e989e",
       "Name": "Custom_Token",
       "Transform": {
-        "posX": -31.715519,
-        "posY": 1.07450449,
+        "posX": -31.71552,
+        "posY": 1.07450616,
         "posZ": -16.49727,
-        "rotX": -3.10419855E-05,
-        "rotY": 179.474167,
-        "rotZ": -0.000123406659,
+        "rotX": -2.29049674E-05,
+        "rotY": 179.474365,
+        "rotZ": -3.176365E-05,
         "scaleX": 0.6078094,
         "scaleY": 1.0,
         "scaleZ": 0.6078094
@@ -24757,12 +24820,12 @@
       "GUID": "128cb4",
       "Name": "Custom_Token",
       "Transform": {
-        "posX": -31.7083378,
-        "posY": 0.9745062,
+        "posX": -31.70834,
+        "posY": 0.9745064,
         "posZ": -16.4977989,
-        "rotX": -1.12504313E-05,
-        "rotY": 179.992111,
-        "rotZ": -1.86549842E-05,
+        "rotX": -5.00305941E-06,
+        "rotY": 179.9922,
+        "rotZ": -8.297056E-06,
         "scaleX": 0.6078094,
         "scaleY": 1.0,
         "scaleZ": 0.6078094
@@ -24776,9 +24839,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.344945371,
-        "g": 0.344945371,
-        "b": 0.344945371,
+        "r": 0.344944775,
+        "g": 0.344944775,
+        "b": 0.344944775,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -24834,9 +24897,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.344945371,
-        "g": 0.344945371,
-        "b": 0.344945371,
+        "r": 0.344944775,
+        "g": 0.344944775,
+        "b": 0.344944775,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -24892,9 +24955,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.344945371,
-        "g": 0.344945371,
-        "b": 0.344945371,
+        "r": 0.344944775,
+        "g": 0.344944775,
+        "b": 0.344944775,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -24980,7 +25043,7 @@
           "Stretch": true
         }
       },
-      "LuaScript": "spawnPos = {\r\n    {-3.46, 1.39, 12.39}, -- 3\r\n    {-5.64, 1.39, 12.06}, -- 2\r\n    {-1.27, 1.39, 11.81}, -- 4\r\n    {-6.41, 1.39, 9.98}, -- 1\r\n    {-0.37, 1.39, 9.78} -- 5\r\n}\r\nrestPos = {\r\n    water = 22.81,\r\n    earth = 24.01,\r\n    fire = 25.20,\r\n    air = 26.41\r\n}\r\nstartZ = -2.72\r\nzIncrement = -1.04\r\nOtherElementMap = {\r\n    water = {'earth', 'fire', 'air'},\r\n    earth = {'water', 'fire', 'air'},\r\n    fire = {'water', 'earth', 'air'},\r\n    air = {'water', 'earth', 'fire'}\r\n}\r\n\r\nDiceBag = nil\r\nUtility = nil\r\n\r\nfunction onload()\r\n    DiceBag = getObjectFromGUID('01d261')\r\n    Utility = getObjectFromGUID('47fd87')\r\n\r\n    self.createButton({\r\n        tooltip = \"Roll Dice\",\r\n        click_function=\"click_roll\",\r\n        function_owner=self,\r\n        position={0,.2,0},\r\n        height=650,\r\n        width=650,\r\n        color={1,1,1,0}\r\n    })\r\nend\r\n\r\nfunction click_roll()\r\n    local round = Utility.call('getRound')\r\n    local element = 'water'\r\n    if round > 3 and round <= 6 then\r\n        element = 'earth'\r\n    end\r\n    if round > 6 and round <= 9 then\r\n        element = 'fire'\r\n    end\r\n    if round > 9 and round <= 12 then\r\n        element = 'air'\r\n    end\r\n\r\n    local destinyDice = getObjectsWithAllTags({'destiny di'})\r\n    if #destinyDice == 1 then\r\n        destinyDice[1].call('returnDestiny')\r\n    end\r\n\r\n    local dice = getObjectsWithAllTags({'Die', element})\r\n\r\n    returnDice(OtherElementMap[element])\r\n\r\n    for index, di in ipairs(dice) do\r\n        di.setPositionSmooth(spawnPos[index], false, true)\r\n        Wait.frames(function()\r\n            di.randomize()\r\n        end, 90)\r\n    end\r\nend\r\n\r\nfunction returnDice(elements)\r\n    for _, element in ipairs(elements) do\r\n        local returnDice = getObjectsWithAllTags({'Die', element})\r\n        for index, returnDi in ipairs(returnDice) do\r\n            local z = startZ + (zIncrement * (index - 1))\r\n            returnDi.setPositionSmooth({restPos[element], 1.4, z})\r\n            returnDi.setRotationSmooth({0,0,0})\r\n        end\r\n    end\r\nend\r\n\r\nfunction alphanumsort(o)\r\n    local function padnum(d) return (\"%03d%s\"):format(#d, d) end\r\n    table.sort(o, function(a,b)\r\n    return tostring(a):gsub(\"%d+\",padnum) < tostring(b):gsub(\"%d+\",padnum) end)\r\n    return o\r\nend",
+      "LuaScript": "spawnPos = {\r\n    {-3.46, 1.39, 12.39}, -- 3\r\n    {-5.64, 1.39, 12.06}, -- 2\r\n    {-1.27, 1.39, 11.81}, -- 4\r\n    {-6.41, 1.39, 9.98}, -- 1\r\n    {-0.37, 1.39, 9.78} -- 5\r\n}\r\nrestPos = {\r\n    water = 22.81,\r\n    earth = 24.01,\r\n    fire = 25.20,\r\n    air = 26.41\r\n}\r\nstartZ = -2.72\r\nzIncrement = -1.04\r\nOtherElementMap = {\r\n    water = {'earth', 'fire', 'air'},\r\n    earth = {'water', 'fire', 'air'},\r\n    fire = {'water', 'earth', 'air'},\r\n    air = {'water', 'earth', 'fire'}\r\n}\r\n\r\nDiceBag = nil\r\nUtility = nil\r\n\r\nfunction onload()\r\n    DiceBag = getObjectsWithAllTags({'unused'})[1]\r\n    Utility = getObjectFromGUID('47fd87')\r\n\r\n    self.createButton({\r\n        tooltip = \"Roll Dice\",\r\n        click_function=\"click_roll\",\r\n        function_owner=self,\r\n        position={0,.2,0},\r\n        height=650,\r\n        width=650,\r\n        color={1,1,1,0}\r\n    })\r\nend\r\n\r\nfunction click_roll()\r\n    local round = Utility.call('getRound')\r\n    local element = 'water'\r\n    if round > 3 and round <= 6 then\r\n        element = 'earth'\r\n    end\r\n    if round > 6 and round <= 9 then\r\n        element = 'fire'\r\n    end\r\n    if round > 9 and round <= 12 then\r\n        element = 'air'\r\n    end\r\n\r\n    local destinyDice = getObjectsWithAllTags({'destiny di'})\r\n    if #destinyDice == 1 then\r\n        destinyDice[1].call('returnDestiny')\r\n    end\r\n\r\n    local dice = getObjectsWithAllTags({'Die', element})\r\n\r\n    returnDice(OtherElementMap[element])\r\n\r\n    for index, die in ipairs(dice) do\r\n        die.setPositionSmooth(spawnPos[index], false, true)\r\n        Wait.frames(function()\r\n            die.randomize()\r\n        end, 90)\r\n    end\r\nend\r\n\r\nfunction returnDice(elements)\r\n    for _, element in ipairs(elements) do\r\n        local returnDice = getObjectsWithAllTags({'Die', element})\r\n        for index, returnDie in ipairs(returnDice) do\r\n            local z = startZ + (zIncrement * (index - 1))\r\n            returnDie.setPositionSmooth({restPos[element], 1.4, z})\r\n            returnDie.setRotationSmooth({0,0,0})\r\n        end\r\n    end\r\nend\r\n\r\nfunction alphanumsort(o)\r\n    local function padnum(d) return (\"%03d%s\"):format(#d, d) end\r\n    table.sort(o, function(a,b)\r\n    return tostring(a):gsub(\"%d+\",padnum) < tostring(b):gsub(\"%d+\",padnum) end)\r\n    return o\r\nend",
       "LuaScriptState": "[]",
       "XmlUI": ""
     },
@@ -24988,12 +25051,12 @@
       "GUID": "7d4840",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 26.4102974,
-        "posY": 1.3867867,
-        "posZ": -6.874093,
-        "rotX": 270.0,
-        "rotY": -8.827021E-05,
-        "rotZ": 0.0,
+        "posX": 26.41,
+        "posY": 1.38678658,
+        "posZ": -2.72,
+        "rotX": 2.46228922E-07,
+        "rotY": -1.31492115E-07,
+        "rotZ": -9.446386E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -25043,7 +25106,7 @@
       "XmlUI": "",
       "RotationValues": [
         {
-          "Value": "1",
+          "Value": "3",
           "Rotation": {
             "x": -90.0,
             "y": 0.0,
@@ -25051,7 +25114,7 @@
           }
         },
         {
-          "Value": "2",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25067,7 +25130,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25075,7 +25138,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25083,7 +25146,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "2",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -25097,11 +25160,11 @@
       "Name": "Custom_Dice",
       "Transform": {
         "posX": 26.4102974,
-        "posY": 1.3867867,
-        "posZ": -3.76409769,
-        "rotX": 270.0,
-        "rotY": -0.00105812121,
-        "rotZ": 0.0,
+        "posY": 1.38678658,
+        "posZ": -3.76409841,
+        "rotX": 2.78347869E-08,
+        "rotY": -3.738192E-08,
+        "rotZ": 1.07132712E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -25167,7 +25230,7 @@
           }
         },
         {
-          "Value": "3",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25175,7 +25238,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25183,7 +25246,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25191,7 +25254,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -25204,12 +25267,12 @@
       "GUID": "42704e",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 26.4102974,
-        "posY": 1.3867867,
-        "posZ": -4.77409458,
-        "rotX": 270.0,
-        "rotY": -8.374742E-05,
-        "rotZ": 0.0,
+        "posX": 26.4100056,
+        "posY": 1.38678658,
+        "posZ": -4.80000448,
+        "rotX": 6.59178068E-06,
+        "rotY": 0.00166713714,
+        "rotZ": -2.89300569E-05,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -25275,7 +25338,7 @@
           }
         },
         {
-          "Value": "3",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25283,7 +25346,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25291,7 +25354,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25299,7 +25362,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -25312,12 +25375,12 @@
       "GUID": "a90795",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 26.4102974,
-        "posY": 1.3867867,
-        "posZ": -5.80409431,
-        "rotX": 270.0,
-        "rotY": -9.20037346E-05,
-        "rotZ": 0.0,
+        "posX": 26.41,
+        "posY": 1.38678658,
+        "posZ": -5.84,
+        "rotX": -5.41095737E-08,
+        "rotY": 3.901344E-08,
+        "rotZ": 1.55148712E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -25367,7 +25430,7 @@
       "XmlUI": "",
       "RotationValues": [
         {
-          "Value": "1",
+          "Value": "2",
           "Rotation": {
             "x": -90.0,
             "y": 0.0,
@@ -25375,7 +25438,7 @@
           }
         },
         {
-          "Value": "2",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25391,7 +25454,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25399,7 +25462,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25407,7 +25470,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "2",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -25424,7 +25487,7 @@
         "posY": 1.3867867,
         "posZ": -4.77409458,
         "rotX": 270.0,
-        "rotY": -7.77289E-05,
+        "rotY": -5.02858929E-05,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -25475,9 +25538,17 @@
       "XmlUI": "",
       "RotationValues": [
         {
-          "Value": "1",
+          "Value": "2",
           "Rotation": {
             "x": -90.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "Value": "1",
+          "Rotation": {
+            "x": 0.0,
             "y": 0.0,
             "z": 0.0
           }
@@ -25487,19 +25558,11 @@
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
-            "z": 0.0
-          }
-        },
-        {
-          "Value": "3",
-          "Rotation": {
-            "x": 0.0,
-            "y": 0.0,
             "z": -90.0
           }
         },
         {
-          "Value": "4",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25507,7 +25570,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25515,7 +25578,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -25528,11 +25591,11 @@
       "GUID": "0fbf82",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 22.8128529,
-        "posY": 1.3867867,
-        "posZ": -2.72409678,
+        "posX": 22.8121262,
+        "posY": 1.38678658,
+        "posZ": -3.764074,
         "rotX": 270.0,
-        "rotY": -0.00101402623,
+        "rotY": 0.340308815,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -25599,7 +25662,7 @@
           }
         },
         {
-          "Value": "3",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25607,7 +25670,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25615,7 +25678,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25623,7 +25686,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -25636,11 +25699,11 @@
       "GUID": "9f8ab6",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 22.8128529,
+        "posX": 22.81514,
         "posY": 1.3867867,
-        "posZ": -3.76409817,
+        "posZ": -5.80409431,
         "rotX": 270.0,
-        "rotY": -0.00102258741,
+        "rotY": -2.12157956E-05,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -25707,7 +25770,7 @@
           }
         },
         {
-          "Value": "3",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25715,7 +25778,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25723,7 +25786,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25731,7 +25794,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -25744,11 +25807,11 @@
       "GUID": "1e5ece",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 22.81514,
-        "posY": 1.3867867,
-        "posZ": -5.80409431,
+        "posX": 22.8128529,
+        "posY": 1.38678658,
+        "posZ": -2.72409487,
         "rotX": 270.0,
-        "rotY": -8.00990238E-05,
+        "rotY": 1.49931848,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -25815,7 +25878,7 @@
           }
         },
         {
-          "Value": "3",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25823,7 +25886,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25831,7 +25894,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25839,7 +25902,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -25856,7 +25919,7 @@
         "posY": 1.3867867,
         "posZ": -6.874093,
         "rotX": 270.0,
-        "rotY": -0.000121169665,
+        "rotY": -7.115329E-05,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -25923,7 +25986,7 @@
           }
         },
         {
-          "Value": "3",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25931,7 +25994,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25939,7 +26002,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -25947,7 +26010,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -25960,12 +26023,12 @@
       "GUID": "2308e7",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 24.0164566,
+        "posX": 24.0107155,
         "posY": 1.38678682,
-        "posZ": -6.87409258,
-        "rotX": 7.78266E-07,
-        "rotY": 0.000960973441,
-        "rotZ": 270.0,
+        "posZ": -2.72001672,
+        "rotX": -1.59773975E-07,
+        "rotY": 359.6653,
+        "rotZ": 6.67526336E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26015,7 +26078,7 @@
       "XmlUI": "",
       "RotationValues": [
         {
-          "Value": "1",
+          "Value": "3",
           "Rotation": {
             "x": -90.0,
             "y": 0.0,
@@ -26023,7 +26086,7 @@
           }
         },
         {
-          "Value": "2",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26039,7 +26102,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26047,7 +26110,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26055,7 +26118,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "2",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -26068,12 +26131,12 @@
       "GUID": "c1c245",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 24.0164547,
-        "posY": 1.3867867,
-        "posZ": -5.80409431,
-        "rotX": 270.0,
-        "rotY": -9.7037846E-05,
-        "rotZ": 0.0,
+        "posX": 24.01,
+        "posY": 1.38678658,
+        "posZ": -3.76,
+        "rotX": 1.00915109E-07,
+        "rotY": 1.78842772E-08,
+        "rotZ": 2.26629382E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26123,9 +26186,17 @@
       "XmlUI": "",
       "RotationValues": [
         {
-          "Value": "1",
+          "Value": "2",
           "Rotation": {
             "x": -90.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "Value": "1",
+          "Rotation": {
+            "x": 0.0,
             "y": 0.0,
             "z": 0.0
           }
@@ -26135,19 +26206,11 @@
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
-            "z": 0.0
-          }
-        },
-        {
-          "Value": "3",
-          "Rotation": {
-            "x": 0.0,
-            "y": 0.0,
             "z": -90.0
           }
         },
         {
-          "Value": "4",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26155,7 +26218,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26163,7 +26226,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -26176,12 +26239,12 @@
       "GUID": "cd2158",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 24.0136948,
-        "posY": 1.3867867,
-        "posZ": -4.77409458,
-        "rotX": 270.0,
-        "rotY": -7.682322E-05,
-        "rotZ": 0.0,
+        "posX": 24.01001,
+        "posY": 1.38678658,
+        "posZ": -4.800004,
+        "rotX": -3.28331635E-06,
+        "rotY": 0.00140938361,
+        "rotZ": -2.07414473E-06,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26247,7 +26310,7 @@
           }
         },
         {
-          "Value": "3",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26255,7 +26318,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26263,7 +26326,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26271,7 +26334,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -26284,12 +26347,12 @@
       "GUID": "9ccfe3",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 24.0136948,
-        "posY": 1.3867867,
-        "posZ": -3.76409817,
-        "rotX": 270.0,
-        "rotY": -0.0010381625,
-        "rotZ": 0.0,
+        "posX": 24.01,
+        "posY": 1.38678658,
+        "posZ": -5.84,
+        "rotX": 4.41828263E-08,
+        "rotY": 3.20788E-09,
+        "rotZ": 1.83004374E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26339,7 +26402,7 @@
       "XmlUI": "",
       "RotationValues": [
         {
-          "Value": "1",
+          "Value": "3",
           "Rotation": {
             "x": -90.0,
             "y": 0.0,
@@ -26347,7 +26410,7 @@
           }
         },
         {
-          "Value": "2",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26363,7 +26426,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26371,7 +26434,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26379,7 +26442,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "2",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -26392,12 +26455,12 @@
       "GUID": "43fec1",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 24.01248,
-        "posY": 1.3867867,
-        "posZ": -2.732406,
-        "rotX": 270.0,
-        "rotY": 1.00646377,
-        "rotZ": 0.0,
+        "posX": 24.01,
+        "posY": 1.386787,
+        "posZ": -6.88,
+        "rotX": 1.14175947E-07,
+        "rotY": -1.46003361E-08,
+        "rotZ": 180.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26447,7 +26510,7 @@
       "XmlUI": "",
       "RotationValues": [
         {
-          "Value": "1",
+          "Value": "3",
           "Rotation": {
             "x": -90.0,
             "y": 0.0,
@@ -26455,15 +26518,15 @@
           }
         },
         {
-          "Value": "2",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
-            "y": 0.0,
+            "y": 180.0,
             "z": 0.0
           }
         },
         {
-          "Value": "3",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26471,7 +26534,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26479,7 +26542,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26487,7 +26550,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -26500,12 +26563,12 @@
       "GUID": "787369",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 25.202343,
-        "posY": 1.3867867,
-        "posZ": -6.87371731,
-        "rotX": 270.0,
-        "rotY": 0.0003123508,
-        "rotZ": 0.0,
+        "posX": 25.2,
+        "posY": 1.38678658,
+        "posZ": -2.72,
+        "rotX": 1.96388584E-07,
+        "rotY": 2.9319398E-09,
+        "rotZ": -1.08592957E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26555,9 +26618,17 @@
       "XmlUI": "",
       "RotationValues": [
         {
-          "Value": "1",
+          "Value": "2",
           "Rotation": {
             "x": -90.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "Value": "1",
+          "Rotation": {
+            "x": 0.0,
             "y": 0.0,
             "z": 0.0
           }
@@ -26567,19 +26638,11 @@
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
-            "z": 0.0
-          }
-        },
-        {
-          "Value": "3",
-          "Rotation": {
-            "x": 0.0,
-            "y": 0.0,
             "z": -90.0
           }
         },
         {
-          "Value": "4",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26587,7 +26650,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26595,7 +26658,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -26608,12 +26671,12 @@
       "GUID": "f0896f",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 25.20217,
+        "posX": 25.19821,
         "posY": 1.3867867,
-        "posZ": -5.80409527,
-        "rotX": 270.0,
-        "rotY": -9.586563E-05,
-        "rotZ": 0.0,
+        "posZ": -3.75994039,
+        "rotX": -8.246744E-07,
+        "rotY": 0.8381359,
+        "rotZ": 4.78430934E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26679,7 +26742,7 @@
           }
         },
         {
-          "Value": "3",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26687,7 +26750,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26695,7 +26758,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26703,7 +26766,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -26716,12 +26779,12 @@
       "GUID": "14e7cd",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 25.20217,
-        "posY": 1.3867867,
-        "posZ": -4.77409458,
-        "rotX": 270.0,
-        "rotY": -7.362424E-05,
-        "rotZ": 0.0,
+        "posX": 25.2000046,
+        "posY": 1.38678658,
+        "posZ": -4.800004,
+        "rotX": 1.00043408E-05,
+        "rotY": 0.00140678475,
+        "rotZ": 1.810805E-05,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26787,7 +26850,7 @@
           }
         },
         {
-          "Value": "3",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26795,7 +26858,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26803,7 +26866,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26811,7 +26874,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -26824,12 +26887,12 @@
       "GUID": "826e79",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 25.20217,
-        "posY": 1.3867867,
-        "posZ": -2.72409749,
-        "rotX": 270.0,
-        "rotY": -0.0009865902,
-        "rotZ": 0.0,
+        "posX": 25.2,
+        "posY": 1.38678658,
+        "posZ": -5.84,
+        "rotX": -1.0853114E-07,
+        "rotY": 5.305682E-08,
+        "rotZ": 3.00721155E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26879,7 +26942,7 @@
       "XmlUI": "",
       "RotationValues": [
         {
-          "Value": "1",
+          "Value": "3",
           "Rotation": {
             "x": -90.0,
             "y": 0.0,
@@ -26887,7 +26950,7 @@
           }
         },
         {
-          "Value": "2",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26903,7 +26966,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26911,7 +26974,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -26919,7 +26982,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "2",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -26932,12 +26995,12 @@
       "GUID": "184208",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 25.20217,
-        "posY": 1.3867867,
-        "posZ": -3.764099,
-        "rotX": 270.0,
-        "rotY": -0.0009949422,
-        "rotZ": 0.0,
+        "posX": 25.2,
+        "posY": 1.38678658,
+        "posZ": -6.88,
+        "rotX": 7.48506537E-08,
+        "rotY": 1.29758533E-08,
+        "rotZ": 1.315662E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27003,7 +27066,7 @@
           }
         },
         {
-          "Value": "3",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -27011,7 +27074,7 @@
           }
         },
         {
-          "Value": "4",
+          "Value": "2",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -27019,7 +27082,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -27027,7 +27090,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -27040,12 +27103,12 @@
       "GUID": "7fcda9",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 26.4094028,
-        "posY": 1.3867867,
-        "posZ": -2.73544765,
-        "rotX": 270.0,
-        "rotY": 0.179308221,
-        "rotZ": 0.0,
+        "posX": 26.41,
+        "posY": 1.386787,
+        "posZ": -6.88,
+        "rotX": 3.39614381E-08,
+        "rotY": -9.45362757E-08,
+        "rotZ": 180.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27095,9 +27158,17 @@
       "XmlUI": "",
       "RotationValues": [
         {
-          "Value": "1",
+          "Value": "2",
           "Rotation": {
             "x": -90.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "Value": "1",
+          "Rotation": {
+            "x": 0.0,
             "y": 0.0,
             "z": 0.0
           }
@@ -27107,19 +27178,11 @@
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
-            "z": 0.0
-          }
-        },
-        {
-          "Value": "3",
-          "Rotation": {
-            "x": 0.0,
-            "y": 0.0,
             "z": -90.0
           }
         },
         {
-          "Value": "4",
+          "Value": "1",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -27127,7 +27190,7 @@
           }
         },
         {
-          "Value": "5",
+          "Value": "3",
           "Rotation": {
             "x": 0.0,
             "y": 0.0,
@@ -27135,7 +27198,7 @@
           }
         },
         {
-          "Value": "6",
+          "Value": "3",
           "Rotation": {
             "x": 90.0,
             "y": 0.0,
@@ -27148,12 +27211,12 @@
       "GUID": "6a887a",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 32.562973,
-        "posY": 1.3867867,
-        "posZ": -10.9673281,
-        "rotX": 270.0,
-        "rotY": 2.05128932,
-        "rotZ": 0.0,
+        "posX": 32.620388,
+        "posY": 1.38678658,
+        "posZ": -10.9261465,
+        "rotX": 1.44397436E-08,
+        "rotY": -5.65739356E-05,
+        "rotZ": 1.68283449E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27197,7 +27260,7 @@
           "Type": 1
         }
       },
-      "LuaScript": "destinyPos = {-3.45, 1.39, 7.73}\r\n\r\nfunction hideDestiny()\r\n    local items = {\r\n        getObjectFromGUID('975275'),\r\n        getObjectFromGUID('48b274'),\r\n        getObjectFromGUID('0e1960'),\r\n        getObjectFromGUID('50469c'),\r\n        table.unpack(getObjectsWithAllTags({'Destiny'}))\r\n    }\r\n    for _, item in ipairs(getObjectsWithAllTags({'Destiny'})) do\r\n        local p = item.getPosition()\r\n        item.setPositionSmooth({p[1], p[2] - 1, p[3]})\r\n    end\r\n    getObjectFromGUID('01d261').putObject(self)\r\nend\r\n\r\nfunction returnDestiny()\r\n    self.setPositionSmooth(destinyPos)\r\n    self.setRotationSmooth({0,0,0})\r\nend",
+      "LuaScript": "destinyPos = {-3.45, 1.39, 7.73}\r\n\r\nfunction hideDestiny()\r\n    local items = {\r\n        getObjectFromGUID('975275'),\r\n        getObjectFromGUID('48b274'),\r\n        getObjectFromGUID('0e1960'),\r\n        getObjectFromGUID('50469c'),\r\n        table.unpack(getObjectsWithAllTags({'Destiny'}))\r\n    }\r\n    for _, item in ipairs(getObjectsWithAllTags({'Destiny'})) do\r\n        local p = item.getPosition()\r\n        item.setPositionSmooth({p[1], p[2] - 1, p[3]})\r\n    end\r\n    getObjectsWithAllTags({'unused'})[1].putObject(self)\r\nend\r\n\r\nfunction returnDestiny()\r\n    self.setPositionSmooth(destinyPos)\r\nend",
       "LuaScriptState": "",
       "XmlUI": "",
       "RotationValues": [
@@ -27293,7 +27356,7 @@
       "GridProjection": false,
       "HideWhenFaceDown": false,
       "Hands": false,
-      "LuaScript": "RoundMarkers = {\r\n    {-2.53, 4.34},\r\n    {-0.79, 3.33},\r\n    {0.20, 1.59},\r\n    {0.16, -0.37},\r\n    {-0.84, -2.09},\r\n    {-2.48, -3.07},\r\n    {-4.51, -3.06},\r\n    {-6.19, -2.06},\r\n    {-7.17, -0.37},\r\n    {-7.18, 1.67},\r\n    {-6.22, 3.32},\r\n    {-4.52, 4.31}\r\n}\r\nYearMarkers = {\r\n    {-4.22, 0.62},\r\n    {-3.51, 0.63},\r\n    {-2.81, 0.60}\r\n}\r\nPlayerOrder = {'White', 'Pink', 'Orange', 'Yellow'}\r\n\r\n-- color, slot\r\nfunction getTableauPosition(input)\r\n    local x = input.slot%5\r\n    if x == 0 then x = 5 end\r\n    local z = math.ceil(input.slot/5)\r\n\r\n    return {Global.getTable('Players')[input.color].TableauX[x], 2, Global.getTable('Players')[input.color].TableauZ[z]}\r\nend\r\n\r\nfunction rand(number)\r\n    return math.ceil(math.random() * number)\r\nend\r\n\r\nfunction getSeatedPlayerColors()\r\n    local playerColors = {}\r\n    for _, player in ipairs(Player.getPlayers()) do\r\n        table.insert(playerColors, player.color)\r\n    end\r\n    local ordered = {}\r\n    for _, color in ipairs(PlayerOrder) do\r\n        if has_value({playerColors, color}) == true then\r\n            table.insert(ordered, color)\r\n        end\r\n    end\r\n    return ordered\r\nend\r\n\r\nfunction getNonSeatedPlayerColors()\r\n    local allColors = {'White', 'Pink', 'Orange', 'Yellow'}\r\n    local seatedColors = getSeatedPlayerColors()\r\n    local nonSeatedColors = {}\r\n    for _, color in ipairs(allColors) do\r\n        if has_value({seatedColors, color}) == false then\r\n            table.insert(nonSeatedColors, color)\r\n        end\r\n    end\r\n    return nonSeatedColors\r\nend\r\n\r\n-- {tab, val}\r\nfunction has_value(input)\r\n    for index, value in ipairs(input[1]) do\r\n        if value == input[2] then\r\n            return true\r\n        end\r\n    end\r\n    return false\r\nend\r\n\r\nfunction getDeckFromZone(zone)\r\n    if (zone == nil) then return end\r\n    for _, object in ipairs(zone.getObjects(true)) do\r\n        if (object.type == 'Deck') then\r\n            return object\r\n        end\r\n    end\r\n    return nil\r\nend\r\n\r\nfunction getCardFromZone(zone)\r\n    if (zone == nil) then return end\r\n    for _, object in ipairs(zone.getObjects(true)) do\r\n        if (object.type == 'Card') then\r\n            return object\r\n        end\r\n    end\r\n    return nil\r\nend\r\n\r\nfunction shuffleArray(array)\r\n    local output = { }\r\n    local random = math.random\r\n\r\n    for index = 1, #array do\r\n        local offset = index - 1\r\n        local value = array[index]\r\n        local randomIndex = offset*random()\r\n        local flooredIndex = randomIndex - randomIndex%1\r\n\r\n        if flooredIndex == offset then\r\n            output[#output + 1] = value\r\n        else\r\n            output[#output + 1] = output[flooredIndex + 1]\r\n            output[flooredIndex + 1] = value\r\n        end\r\n    end\r\n\r\n    return output\r\nend\r\n\r\nfunction getRound()\r\n    local pos = getObjectsWithAllTags({'round marker'})[1].getPosition()\r\n    local x = round(pos[1],2)\r\n    local z = round(pos[3],2)\r\n    for index, marker in ipairs(RoundMarkers) do\r\n        if marker[1] == x and marker[2] == z then\r\n            return index\r\n        end\r\n    end\r\nend\r\n\r\nfunction getYear()\r\n    local pos = getObjectsWithAllTags({'year marker'})[1].getPosition()\r\n    local x = round(pos[1],2)\r\n    local z = round(pos[3],2)\r\n    for index, marker in ipairs(YearMarkers) do\r\n        if marker[1] == x and marker[2] == z then\r\n            return index\r\n        end\r\n    end\r\nend\r\n\r\nfunction round(num, numDecimalPlaces)\r\n  if numDecimalPlaces and numDecimalPlaces>0 then\r\n    local mult = 10^numDecimalPlaces\r\n    return math.floor(num * mult + 0.5) / mult\r\n  end\r\n  return math.floor(num + 0.5)\r\nend",
+      "LuaScript": "RoundMarkers = {\r\n    {-2.53, 4.34},\r\n    {-0.79, 3.33},\r\n    {0.20, 1.59},\r\n    {0.16, -0.37},\r\n    {-0.84, -2.09},\r\n    {-2.48, -3.07},\r\n    {-4.51, -3.06},\r\n    {-6.19, -2.06},\r\n    {-7.17, -0.37},\r\n    {-7.18, 1.67},\r\n    {-6.22, 3.32},\r\n    {-4.52, 4.31}\r\n}\r\nYearMarkers = {\r\n    {-4.22, 0.62},\r\n    {-3.51, 0.63},\r\n    {-2.81, 0.60}\r\n}\r\nPlayerOrder = {'White', 'Pink', 'Orange', 'Yellow'}\r\n\r\n-- color, slot\r\nfunction getTableauPosition(input)\r\n    local x = input.slot%5\r\n    if x == 0 then x = 5 end\r\n    local z = math.ceil(input.slot/5)\r\n\r\n    return {Global.getTable('Players')[input.color].TableauX[x], 2, Global.getTable('Players')[input.color].TableauZ[z]}\r\nend\r\n\r\nfunction rand(number)\r\n    return math.ceil(math.random() * number)\r\nend\r\n\r\nfunction getSeatedPlayerColors()\r\n    local playerColors = {}\r\n    for _, player in ipairs(Player.getPlayers()) do\r\n        table.insert(playerColors, player.color)\r\n    end\r\n    local ordered = {}\r\n    for _, color in ipairs(PlayerOrder) do\r\n        if has_value({playerColors, color}) == true then\r\n            table.insert(ordered, color)\r\n        end\r\n    end\r\n    return ordered\r\nend\r\n\r\nfunction getNonSeatedPlayerColors()\r\n    local allColors = {'White', 'Pink', 'Orange', 'Yellow'}\r\n    local seatedColors = getSeatedPlayerColors()\r\n    local nonSeatedColors = {}\r\n    for _, color in ipairs(allColors) do\r\n        if has_value({seatedColors, color}) == false then\r\n            table.insert(nonSeatedColors, color)\r\n        end\r\n    end\r\n    return nonSeatedColors\r\nend\r\n\r\n-- {tab, val}\r\nfunction has_value(input)\r\n    for index, value in ipairs(input[1]) do\r\n        if value == input[2] then\r\n            return true\r\n        end\r\n    end\r\n    return false\r\nend\r\n\r\nfunction getDeckFromZone(zone)\r\n    if (zone == nil) then return end\r\n    for _, object in ipairs(zone.getObjects(true)) do\r\n        if (object.type == 'Deck') then\r\n            return object\r\n        end\r\n    end\r\n    return nil\r\nend\r\n\r\nfunction getCardFromZone(zone)\r\n    if (zone == nil) then return end\r\n    for _, object in ipairs(zone.getObjects(true)) do\r\n        if (object.type == 'Card') then\r\n            return object\r\n        end\r\n    end\r\n    return nil\r\nend\r\n\r\nfunction shuffleArray(array)\r\n    local output = { }\r\n    local random = math.random\r\n\r\n    for index = 1, #array do\r\n        local offset = index - 1\r\n        local value = array[index]\r\n        local randomIndex = offset*random()\r\n        local flooredIndex = randomIndex - randomIndex%1\r\n\r\n        if flooredIndex == offset then\r\n            output[#output + 1] = value\r\n        else\r\n            output[#output + 1] = output[flooredIndex + 1]\r\n            output[flooredIndex + 1] = value\r\n        end\r\n    end\r\n\r\n    return output\r\nend\r\n\r\nfunction getRound()\r\n    local pos = getRoundMarker().getPosition()\r\n    local x = round(pos[1],2)\r\n    local z = round(pos[3],2)\r\n    for index, marker in ipairs(RoundMarkers) do\r\n        if marker[1] == x and marker[2] == z then\r\n            return index\r\n        end\r\n    end\r\nend\r\n\r\nfunction getSeason(round)\r\n    local seasons = { 'Winter', 'Winter', 'Winter', 'Spring', 'Spring', 'Spring', 'Summer', 'Summer', 'Summer', 'Fall', 'Fall', 'Fall' }\r\n    return seasons[round]\r\nend\r\n\r\nfunction getYear()\r\n    local pos = getYearMarker().getPosition()\r\n    local x = round(pos[1],2)\r\n    local z = round(pos[3],2)\r\n    for index, marker in ipairs(YearMarkers) do\r\n        if marker[1] == x and marker[2] == z then\r\n            return index\r\n        end\r\n    end\r\nend\r\n\r\nfunction moveRound(number)\r\n    local p = RoundMarkers[number]\r\n    getRoundMarker().setPositionSmooth({p[1], 1.20, p[2]})\r\nend\r\nfunction moveYear(number)\r\n    local p = YearMarkers[number]\r\n    getYearMarker().setPositionSmooth({p[1], 1.20, p[2]})\r\nend\r\n\r\nfunction getRoundMarker()\r\n    return getObjectsWithAllTags({'round marker'})[1]\r\nend\r\nfunction getYearMarker()\r\n    return getObjectsWithAllTags({'year marker'})[1]\r\nend\r\n\r\nfunction round(num, numDecimalPlaces)\r\n  if numDecimalPlaces and numDecimalPlaces>0 then\r\n    local mult = 10^numDecimalPlaces\r\n    return math.floor(num * mult + 0.5) / mult\r\n  end\r\n  return math.floor(num + 0.5)\r\nend",
       "LuaScriptState": "",
       "XmlUI": ""
     },
@@ -27385,7 +27448,7 @@
       "GridProjection": false,
       "HideWhenFaceDown": false,
       "Hands": false,
-      "LuaScript": "Drafting = {\r\n    Turn = 1,\r\n    PlayerCount = 0,\r\n    SelectedCount = 0,\r\n    MaxTurns = 9\r\n}\r\n\r\nUtility = nil\r\n\r\nfunction onLoad()\r\n    Utility = getObjectFromGUID('47fd87')\r\nend\r\n\r\nfunction settings()\r\n    return Global.getTable('settings')\r\nend\r\n\r\nfunction dealStartingHand()\r\n    local colors = Utility.call('shuffleArray', Player.getAvailableColors())\r\n    local deck = Global.call('getDrawDeck')\r\n    local playerColors = {table.unpack(Utility.call('getSeatedPlayerColors'))}\r\n    Drafting.PlayerCount = #playerColors\r\n\r\n    if settings().difficulty == 'beginner' then\r\n        for _, card in ipairs(deck.getObjects()) do\r\n            for x=1,4 do\r\n                local hasBeginnerTag = Utility.call('has_value', {card.tags, 'beginner' .. x})\r\n                local isPlayerColor = Utility.call('has_value', {playerColors, colors[x]})\r\n                if hasBeginnerTag == true and isPlayerColor == true then\r\n                    local takenCard = deck.takeObject({ guid = card.guid })\r\n                    takenCard.deal(1, colors[x])\r\n                end\r\n            end\r\n        end\r\n        print('There is no drafting in Apprentice Wizard difficulty. Everyone keeps their starting hands.')\r\n        elementalConstruction(9, deck, playerColors)\r\n        endDrafting()\r\n    elseif settings().enchantmentCard == 'Elemental Construction' then\r\n        elementalConstruction(18, deck, playerColors)\r\n    else\r\n\r\n        local draftCount = 9\r\n        if settings().enchantmentCard == 'Natural Selection' then\r\n            yellowPrint('Natural Selection Enchantment')\r\n            yellowPrint('Each player discards one of their Power cards and the remaining 10 are passed to the left.')\r\n            Drafting.Turn = 0\r\n            draftCount = 11\r\n            Drafting.MaxTurns = 10\r\n        end\r\n        if settings().enchantmentCard == 'Extended Experience' then\r\n            draftCount = 12\r\n            Drafting.MaxTurns = 12\r\n        end\r\n        if settings().enchantmentCard == 'Crossed Paths' then\r\n            yellowPrint('Crossed Paths Enchantment')\r\n            yellowPrint('The first card selected is passed to the player to your left.')\r\n        end\r\n\r\n        for _, color in ipairs(playerColors) do\r\n            for x=1, draftCount do\r\n                local card = deck.takeObject({\r\n                    position = Utility.call('getTableauPosition', {color = color, slot = x}),\r\n                    flip = true,\r\n                    rotation = Global.getTable('Players')[color].SpecialR\r\n                })\r\n                card.addTag(color)\r\n                if settings().enchantmentCard == 'Natural Selection' then\r\n                    addCardDiscardButton(card)\r\n                elseif settings().enchantmentCard == 'Crossed Paths' then\r\n                    addCardPassLeftButton(card)\r\n                else\r\n                    addCardSelectButton(card)\r\n                end\r\n            end\r\n        end\r\n        if settings().enchantmentCard ~= 'Natural Selection' then\r\n            print('Every player must draft their card. Round 1.')\r\n        end\r\n    end\r\nend\r\n\r\nfunction elementalConstruction(num, deck, playerColors)\r\n    if settings().enchantmentCard == 'Elemental Construction' then\r\n        yellowPrint('Elemental Constuction Enchantment')\r\n        yellowPrint('Each player draws 18 and selects 9 of them. The remaining are shuffled back into the draw pile.')\r\n        for _, color in ipairs(playerColors) do\r\n            deck.deal(num, color)\r\n        end\r\n    end\r\nend\r\n\r\nfunction addCardSelectButton(card)\r\n    card.createButton(getDefaultButton())\r\nend\r\n\r\nfunction addCardPassLeftButton(card)\r\n    local button = getDefaultButton()\r\n    button.label = \"Pass Left\"\r\n    button.width = 450\r\n    button.tooltip = \"Pass to the player to your left\"\r\n    button.click_function = \"passLeftCard\"\r\n    card.createButton(button)\r\nend\r\n\r\nfunction addCardDiscardButton(card)\r\n    local button = getDefaultButton()\r\n    button.label = \"Discard\"\r\n    button.tooltip = \"Discard Card\"\r\n    button.click_function = \"discardCard\"\r\n    card.createButton(button)\r\nend\r\n\r\nfunction getDefaultButton()\r\n    return {\r\n        click_function = \"selectCard\",\r\n        function_owner = self,\r\n        label          = \"Select\",\r\n        position       = {0,.2, 0},\r\n        rotation       = {0,0,0},\r\n        width          = 380,\r\n        height         = 145,\r\n        font_size      = 100,\r\n        color          = {0/255, 0/255, 0/255,1},\r\n        font_color     = {255/255, 255/255,255/255,1},\r\n        tooltip        = 'Select Card'\r\n    }\r\nend\r\n\r\nfunction selectCard(object, color)\r\n    if object.hasTag(color) == false then return end\r\n    removeZoneButtons(color)\r\n    object.deal(1, color)\r\n    checkPassDraft()\r\nend\r\n\r\nfunction discardCard(object, color)\r\n    if object.hasTag(color) == false then return end\r\n    removeZoneButtons(color)\r\n    object.setPositionSmooth(Global.getTable('DiscardPilePos'))\r\n    checkPassDraft()\r\nend\r\n\r\nfunction passLeftCard(object, color)\r\n    if object.hasTag(color) == false then return end\r\n    removeZoneButtons(color)\r\n    local seatedColors = Utility.call('getSeatedPlayerColors')\r\n    for index, c in ipairs(seatedColors) do\r\n        if color == c then\r\n            local nextColor = seatedColors[index + 1]\r\n            if nextColor == nil then\r\n                nextColor = seatedColors[1]\r\n            end\r\n            object.deal(1, nextColor)\r\n        end\r\n    end\r\n    checkPassDraft()\r\nend\r\n\r\nfunction removeZoneButtons(color)\r\n    local zone = getObjectsWithAllTags({color, 'hidden zone'})[1]\r\n    for _, object in ipairs(zone.getObjects(true)) do\r\n        if object.type == 'Card' then\r\n            object.removeButton(0)\r\n            object.removeTag(color)\r\n        end\r\n    end\r\nend\r\n\r\nfunction checkPassDraft()\r\n    Drafting.SelectedCount = Drafting.SelectedCount + 1\r\n    if Drafting.SelectedCount == Drafting.PlayerCount then\r\n        Wait.time(function() passDraft() end, 1.3)\r\n    end\r\nend\r\n\r\nfunction passDraft()\r\n    Drafting.SelectedCount = 0\r\n    Drafting.Turn = Drafting.Turn + 1\r\n\r\n    if Drafting.Turn ~= Drafting.MaxTurns then\r\n        print('Every player must draft their card. Round ' .. Drafting.Turn .. '.')\r\n    end\r\n    local seatedColors = Utility.call('getSeatedPlayerColors')\r\n    local remainingCards = {\r\n        White = {},\r\n        Pink = {},\r\n        Yellow = {},\r\n        Orange = {},\r\n    }\r\n\r\n    for _, color in ipairs(seatedColors) do\r\n        local zone = getObjectsWithAllTags({color, 'hidden zone'})[1]\r\n        for _, object in ipairs(zone.getObjects(true)) do\r\n            if object.type == 'Card' then\r\n                table.insert(remainingCards[color], object)\r\n            end\r\n        end\r\n    end\r\n    for index, color in ipairs(seatedColors) do\r\n        local nextColor = seatedColors[index + 1]\r\n        if nextColor == nil then\r\n            nextColor = seatedColors[1]\r\n        end\r\n        for remainingIndex, remainingCard in ipairs(remainingCards[color]) do\r\n            if Drafting.Turn ~= Drafting.MaxTurns then\r\n                local tabPos = Utility.call('getTableauPosition', { color = nextColor, slot = remainingIndex })\r\n                remainingCard.setPositionSmooth(tabPos)\r\n                remainingCard.setRotationSmooth(Global.getTable('Players')[nextColor].SpecialR)\r\n                remainingCard.addTag(nextColor)\r\n                addCardSelectButton(remainingCard)\r\n            else\r\n                remainingCard.deal(1, nextColor)\r\n            end\r\n        end\r\n    end\r\n\r\n    if Drafting.Turn == Drafting.MaxTurns then\r\n        print('Every player automatically drafts their final card. Round ' .. Drafting.MaxTurns .. '.')\r\n        if settings().enchantmentCard == 'Natural Selection' then\r\n            yellowPrint('Natural Selection Enchantment')\r\n            yellowPrint('Players must discard down to 9 cards.')\r\n        end\r\n        endDrafting()\r\n    end\r\nend\r\n\r\nfunction endDrafting()\r\n    for _, zone in ipairs(getObjectsWithAllTags({'hidden zone'})) do\r\n        local p = zone.getPosition()\r\n        zone.setPositionSmooth({p[1], -2, p[3]})\r\n    end\r\n    Global.call('setLibraryCards')\r\nend\r\n\r\nfunction yellowPrint(message)\r\n    printToAll(message, stringColorToRGB('Yellow'))\r\nend",
+      "LuaScript": "Drafting = {\r\n    Turn = 1,\r\n    PlayerCount = 0,\r\n    SelectedCount = 0,\r\n    MaxTurns = 9\r\n}\r\n\r\nUtility = nil\r\n\r\nfunction onLoad()\r\n    Utility = getObjectFromGUID('47fd87')\r\nend\r\n\r\nfunction settings()\r\n    return Global.getTable('settings')\r\nend\r\n\r\nfunction dealStartingHand()\r\n    local colors = Utility.call('shuffleArray', Player.getAvailableColors())\r\n    local deck = Global.call('getDrawDeck')\r\n    local playerColors = {table.unpack(Utility.call('getSeatedPlayerColors'))}\r\n    Drafting.PlayerCount = #playerColors\r\n\r\n    if settings().difficulty == 'beginner' then\r\n        for _, card in ipairs(deck.getObjects()) do\r\n            for x=1,4 do\r\n                local hasBeginnerTag = Utility.call('has_value', {card.tags, 'beginner' .. x})\r\n                local isPlayerColor = Utility.call('has_value', {playerColors, colors[x]})\r\n                if hasBeginnerTag == true and isPlayerColor == true then\r\n                    local takenCard = deck.takeObject({ guid = card.guid })\r\n                    takenCard.deal(1, colors[x])\r\n                end\r\n            end\r\n        end\r\n        print('There is no drafting in Apprentice Wizard difficulty. Everyone keeps their starting hands.')\r\n        elementalConstruction(9, deck, playerColors)\r\n        endDrafting()\r\n    elseif settings().enchantmentCard == 'Elemental Construction' then\r\n        elementalConstruction(18, deck, playerColors)\r\n    else\r\n\r\n        local draftCount = 9\r\n        if settings().enchantmentCard == 'Natural Selection' then\r\n            yellowPrint('Natural Selection Enchantment')\r\n            yellowPrint('Each player discards one of their Power cards and the remaining 10 are passed to the left.')\r\n            Drafting.Turn = 0\r\n            draftCount = 11\r\n            Drafting.MaxTurns = 10\r\n        end\r\n        if settings().enchantmentCard == 'Extended Experience' then\r\n            draftCount = 12\r\n            Drafting.MaxTurns = 12\r\n        end\r\n        if settings().enchantmentCard == 'Crossed Paths' then\r\n            yellowPrint('Crossed Paths Enchantment')\r\n            yellowPrint('The first card selected is passed to the player to your left.')\r\n        end\r\n\r\n        for _, color in ipairs(playerColors) do\r\n            for x=1, draftCount do\r\n                local card = deck.takeObject({\r\n                    position = Utility.call('getTableauPosition', {color = color, slot = x}),\r\n                    flip = true,\r\n                    rotation = Global.getTable('Players')[color].SpecialR\r\n                })\r\n                card.addTag(color)\r\n                if settings().enchantmentCard == 'Natural Selection' then\r\n                    addCardDiscardButton(card)\r\n                elseif settings().enchantmentCard == 'Crossed Paths' then\r\n                    addCardPassLeftButton(card)\r\n                else\r\n                    addCardSelectButton(card)\r\n                end\r\n            end\r\n        end\r\n        if settings().enchantmentCard ~= 'Natural Selection' then\r\n            print('Every player must draft their card. Round 1.')\r\n        end\r\n    end\r\nend\r\n\r\nfunction elementalConstruction(num, deck, playerColors)\r\n    if settings().enchantmentCard == 'Elemental Construction' then\r\n        yellowPrint('Elemental Constuction Enchantment')\r\n        yellowPrint('Each player draws 18 and selects 9 of them. The remaining are shuffled back into the draw pile.')\r\n        for _, color in ipairs(playerColors) do\r\n            deck.deal(num, color)\r\n        end\r\n    end\r\nend\r\n\r\nfunction addCardSelectButton(card)\r\n    card.createButton(getDefaultButton())\r\nend\r\n\r\nfunction addCardPassLeftButton(card)\r\n    local button = getDefaultButton()\r\n    button.label = \"Pass Left\"\r\n    button.width = 450\r\n    button.tooltip = \"Pass to the player to your left\"\r\n    button.click_function = \"passLeftCard\"\r\n    card.createButton(button)\r\nend\r\n\r\nfunction addCardDiscardButton(card)\r\n    local button = getDefaultButton()\r\n    button.label = \"Discard\"\r\n    button.tooltip = \"Discard Card\"\r\n    button.click_function = \"discardCard\"\r\n    card.createButton(button)\r\nend\r\n\r\nfunction getDefaultButton()\r\n    return {\r\n        click_function = \"selectCard\",\r\n        function_owner = self,\r\n        label          = \"Select\",\r\n        position       = {0,.2, 0},\r\n        rotation       = {0,0,0},\r\n        width          = 380,\r\n        height         = 145,\r\n        font_size      = 100,\r\n        color          = {0/255, 0/255, 0/255,1},\r\n        font_color     = {255/255, 255/255,255/255,1},\r\n        tooltip        = 'Select Card'\r\n    }\r\nend\r\n\r\nfunction selectCard(object, color)\r\n    if object.hasTag(color) == false then return end\r\n    removeZoneButtons(color)\r\n    object.deal(1, color)\r\n    checkPassDraft()\r\nend\r\n\r\nfunction discardCard(object, color)\r\n    if object.hasTag(color) == false then return end\r\n    removeZoneButtons(color)\r\n    object.setPositionSmooth(Global.getTable('DiscardPilePos'))\r\n    checkPassDraft()\r\nend\r\n\r\nfunction passLeftCard(object, color)\r\n    if object.hasTag(color) == false then return end\r\n    removeZoneButtons(color)\r\n    local seatedColors = Utility.call('getSeatedPlayerColors')\r\n    for index, c in ipairs(seatedColors) do\r\n        if color == c then\r\n            local nextColor = seatedColors[index + 1]\r\n            if nextColor == nil then\r\n                nextColor = seatedColors[1]\r\n            end\r\n            object.deal(1, nextColor)\r\n        end\r\n    end\r\n    checkPassDraft()\r\nend\r\n\r\nfunction removeZoneButtons(color)\r\n    local zone = getObjectsWithAllTags({color, 'hidden zone'})[1]\r\n    for _, object in ipairs(zone.getObjects(true)) do\r\n        if object.type == 'Card' then\r\n            object.removeButton(0)\r\n            object.removeTag(color)\r\n        end\r\n    end\r\nend\r\n\r\nfunction checkPassDraft()\r\n    Drafting.SelectedCount = Drafting.SelectedCount + 1\r\n    if Drafting.SelectedCount == Drafting.PlayerCount then\r\n        Wait.time(function() passDraft() end, 1.3)\r\n    end\r\nend\r\n\r\nfunction passDraft()\r\n    Drafting.SelectedCount = 0\r\n    Drafting.Turn = Drafting.Turn + 1\r\n\r\n    if Drafting.Turn ~= Drafting.MaxTurns then\r\n        print('Every player must draft their card. Round ' .. Drafting.Turn .. '.')\r\n    end\r\n    local seatedColors = Utility.call('getSeatedPlayerColors')\r\n    local remainingCards = {\r\n        White = {},\r\n        Pink = {},\r\n        Yellow = {},\r\n        Orange = {},\r\n    }\r\n\r\n    for _, color in ipairs(seatedColors) do\r\n        local zone = getObjectsWithAllTags({color, 'hidden zone'})[1]\r\n        for _, object in ipairs(zone.getObjects(true)) do\r\n            if object.type == 'Card' then\r\n                table.insert(remainingCards[color], object)\r\n            end\r\n        end\r\n    end\r\n    for index, color in ipairs(seatedColors) do\r\n        local nextColor = seatedColors[index + 1]\r\n        if nextColor == nil then\r\n            nextColor = seatedColors[1]\r\n        end\r\n        for remainingIndex, remainingCard in ipairs(remainingCards[color]) do\r\n            if Drafting.Turn ~= Drafting.MaxTurns then\r\n                local tabPos = Utility.call('getTableauPosition', { color = nextColor, slot = remainingIndex })\r\n                remainingCard.setPositionSmooth(tabPos)\r\n                remainingCard.setRotationSmooth(Global.getTable('Players')[nextColor].SpecialR)\r\n                remainingCard.addTag(nextColor)\r\n                addCardSelectButton(remainingCard)\r\n            else\r\n                remainingCard.deal(1, nextColor)\r\n            end\r\n        end\r\n    end\r\n\r\n    if Drafting.Turn == Drafting.MaxTurns then\r\n        print('Every player automatically drafts their final card. Round ' .. Drafting.MaxTurns .. '.')\r\n        if settings().enchantmentCard == 'Natural Selection' then\r\n            yellowPrint('Natural Selection Enchantment')\r\n            yellowPrint('Players must discard down to 9 cards.')\r\n        end\r\n        endDrafting()\r\n    end\r\nend\r\n\r\nfunction endDrafting()\r\n    for _, zone in ipairs(getObjectsWithAllTags({'hidden zone'})) do\r\n        local p = zone.getPosition()\r\n        zone.setPositionSmooth({p[1], -4.5, p[3]})\r\n    end\r\n    Global.call('setLibraryCards')\r\nend\r\n\r\nfunction yellowPrint(message)\r\n    printToAll(message, stringColorToRGB('Yellow'))\r\nend",
       "LuaScriptState": "",
       "XmlUI": ""
     },
@@ -27393,11 +27456,11 @@
       "GUID": "c8aa70",
       "Name": "Deck",
       "Transform": {
-        "posX": 29.7835178,
+        "posX": 29.7834988,
         "posY": 1.04171789,
-        "posZ": -2.59017372,
-        "rotX": -3.78711427E-08,
-        "rotY": 179.992264,
+        "posZ": -2.59017134,
+        "rotX": 5.288446E-08,
+        "rotY": 179.992188,
         "rotZ": 180.0,
         "scaleX": 1.25,
         "scaleY": 1.0,
@@ -27435,14 +27498,14 @@
       "Hands": false,
       "SidewaysCard": false,
       "DeckIDs": [
+        1110,
+        1107,
+        1116,
+        1117,
         1118,
         1103,
         1114,
         1101,
-        1117,
-        1116,
-        1107,
-        1110,
         1105,
         1102,
         1108,
@@ -27472,15 +27535,259 @@
       "XmlUI": "",
       "ContainedObjects": [
         {
+          "GUID": "75cfbd",
+          "Name": "Card",
+          "Transform": {
+            "posX": 29.7835178,
+            "posY": 1.17444444,
+            "posZ": -2.59017372,
+            "rotX": -0.000610914954,
+            "rotY": 179.9922,
+            "rotZ": 180.000259,
+            "scaleX": 1.25,
+            "scaleY": 1.0,
+            "scaleZ": 1.25
+          },
+          "Nickname": "Force of Destiny",
+          "Description": "",
+          "GMNotes": "",
+          "AltLookAngle": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "ColorDiffuse": {
+            "r": 0.713235259,
+            "g": 0.713235259,
+            "b": 0.713235259
+          },
+          "Tags": [
+            "enchantment"
+          ],
+          "LayoutGroupSortIndex": 0,
+          "Value": 0,
+          "Locked": false,
+          "Grid": true,
+          "Snap": true,
+          "IgnoreFoW": false,
+          "MeasureMovement": false,
+          "DragSelectable": true,
+          "Autoraise": true,
+          "Sticky": true,
+          "Tooltip": true,
+          "GridProjection": false,
+          "HideWhenFaceDown": false,
+          "Hands": true,
+          "CardID": 1110,
+          "SidewaysCard": false,
+          "CustomDeck": {
+            "11": {
+              "FaceURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271260/874D92D95D3B5DD2C48A81CF3069196483650B0A/",
+              "BackURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271323/EEEB3B116C99CF15A1E434F7C673809A420FF32E/",
+              "NumWidth": 5,
+              "NumHeight": 4,
+              "BackIsHidden": false,
+              "UniqueBack": true,
+              "Type": 0
+            }
+          },
+          "LuaScript": "",
+          "LuaScriptState": "",
+          "XmlUI": ""
+        },
+        {
+          "GUID": "128f5f",
+          "Name": "Card",
+          "Transform": {
+            "posX": 30.0784359,
+            "posY": 1.23367536,
+            "posZ": 1.76162958,
+            "rotX": 0.02976946,
+            "rotY": 179.992249,
+            "rotZ": 180.0073,
+            "scaleX": 1.25,
+            "scaleY": 1.0,
+            "scaleZ": 1.25
+          },
+          "Nickname": "Seasons' Turn",
+          "Description": "",
+          "GMNotes": "",
+          "AltLookAngle": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "ColorDiffuse": {
+            "r": 0.713235259,
+            "g": 0.713235259,
+            "b": 0.713235259
+          },
+          "Tags": [
+            "enchantment"
+          ],
+          "LayoutGroupSortIndex": 0,
+          "Value": 0,
+          "Locked": false,
+          "Grid": true,
+          "Snap": true,
+          "IgnoreFoW": false,
+          "MeasureMovement": false,
+          "DragSelectable": true,
+          "Autoraise": true,
+          "Sticky": true,
+          "Tooltip": true,
+          "GridProjection": false,
+          "HideWhenFaceDown": false,
+          "Hands": true,
+          "CardID": 1107,
+          "SidewaysCard": false,
+          "CustomDeck": {
+            "11": {
+              "FaceURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271260/874D92D95D3B5DD2C48A81CF3069196483650B0A/",
+              "BackURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271323/EEEB3B116C99CF15A1E434F7C673809A420FF32E/",
+              "NumWidth": 5,
+              "NumHeight": 4,
+              "BackIsHidden": false,
+              "UniqueBack": true,
+              "Type": 0
+            }
+          },
+          "LuaScript": "",
+          "LuaScriptState": "",
+          "XmlUI": ""
+        },
+        {
+          "GUID": "89c0e9",
+          "Name": "Card",
+          "Transform": {
+            "posX": 30.134901,
+            "posY": 1.2936821,
+            "posZ": 1.00678027,
+            "rotX": 359.221344,
+            "rotY": 180.018127,
+            "rotZ": 177.855438,
+            "scaleX": 1.25,
+            "scaleY": 1.0,
+            "scaleZ": 1.25
+          },
+          "Nickname": "Natural Balance",
+          "Description": "",
+          "GMNotes": "",
+          "AltLookAngle": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "ColorDiffuse": {
+            "r": 0.713235259,
+            "g": 0.713235259,
+            "b": 0.713235259
+          },
+          "Tags": [
+            "enchantment"
+          ],
+          "LayoutGroupSortIndex": 0,
+          "Value": 0,
+          "Locked": false,
+          "Grid": true,
+          "Snap": true,
+          "IgnoreFoW": false,
+          "MeasureMovement": false,
+          "DragSelectable": true,
+          "Autoraise": true,
+          "Sticky": true,
+          "Tooltip": true,
+          "GridProjection": false,
+          "HideWhenFaceDown": false,
+          "Hands": true,
+          "CardID": 1116,
+          "SidewaysCard": false,
+          "CustomDeck": {
+            "11": {
+              "FaceURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271260/874D92D95D3B5DD2C48A81CF3069196483650B0A/",
+              "BackURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271323/EEEB3B116C99CF15A1E434F7C673809A420FF32E/",
+              "NumWidth": 5,
+              "NumHeight": 4,
+              "BackIsHidden": false,
+              "UniqueBack": true,
+              "Type": 0
+            }
+          },
+          "LuaScript": "",
+          "LuaScriptState": "",
+          "XmlUI": ""
+        },
+        {
+          "GUID": "1fdefe",
+          "Name": "Card",
+          "Transform": {
+            "posX": 30.23158,
+            "posY": 1.29761052,
+            "posZ": 0.870320737,
+            "rotX": 359.033875,
+            "rotY": 179.996338,
+            "rotZ": 177.998184,
+            "scaleX": 1.25,
+            "scaleY": 1.0,
+            "scaleZ": 1.25
+          },
+          "Nickname": "Drought",
+          "Description": "",
+          "GMNotes": "",
+          "AltLookAngle": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "ColorDiffuse": {
+            "r": 0.713235259,
+            "g": 0.713235259,
+            "b": 0.713235259
+          },
+          "Tags": [
+            "enchantment"
+          ],
+          "LayoutGroupSortIndex": 0,
+          "Value": 0,
+          "Locked": false,
+          "Grid": true,
+          "Snap": true,
+          "IgnoreFoW": false,
+          "MeasureMovement": false,
+          "DragSelectable": true,
+          "Autoraise": true,
+          "Sticky": true,
+          "Tooltip": true,
+          "GridProjection": false,
+          "HideWhenFaceDown": false,
+          "Hands": true,
+          "CardID": 1117,
+          "SidewaysCard": false,
+          "CustomDeck": {
+            "11": {
+              "FaceURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271260/874D92D95D3B5DD2C48A81CF3069196483650B0A/",
+              "BackURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271323/EEEB3B116C99CF15A1E434F7C673809A420FF32E/",
+              "NumWidth": 5,
+              "NumHeight": 4,
+              "BackIsHidden": false,
+              "UniqueBack": true,
+              "Type": 0
+            }
+          },
+          "LuaScript": "",
+          "LuaScriptState": "",
+          "XmlUI": ""
+        },
+        {
           "GUID": "17d956",
           "Name": "Card",
           "Transform": {
-            "posX": 22.6710873,
-            "posY": 0.9379628,
-            "posZ": 0.4510201,
-            "rotX": 0.0012906522,
-            "rotY": 180.018768,
-            "rotZ": 180.008072,
+            "posX": 30.8693981,
+            "posY": 1.20069659,
+            "posZ": 1.26850581,
+            "rotX": 0.478457153,
+            "rotY": 180.000732,
+            "rotZ": 179.961121,
             "scaleX": 1.25,
             "scaleY": 1.0,
             "scaleZ": 1.25
@@ -27536,12 +27843,12 @@
           "GUID": "63bb66",
           "Name": "Card",
           "Transform": {
-            "posX": 26.9967422,
-            "posY": 0.937460959,
-            "posZ": 0.426753461,
-            "rotX": 0.00526443869,
-            "rotY": 179.970825,
-            "rotZ": 180.034744,
+            "posX": 30.26821,
+            "posY": 1.16791332,
+            "posZ": 1.36447752,
+            "rotX": 0.469388545,
+            "rotY": 179.993347,
+            "rotZ": 180.007568,
             "scaleX": 1.25,
             "scaleY": 1.0,
             "scaleZ": 1.25
@@ -27597,12 +27904,12 @@
           "GUID": "853316",
           "Name": "Card",
           "Transform": {
-            "posX": 29.7835178,
-            "posY": 1.03490174,
-            "posZ": -2.59017372,
-            "rotX": -4.579477E-05,
-            "rotY": 180.024765,
-            "rotZ": 180.000259,
+            "posX": 30.3869915,
+            "posY": 1.13826716,
+            "posZ": 1.813859,
+            "rotX": 0.469764948,
+            "rotY": 179.9924,
+            "rotZ": 180.000778,
             "scaleX": 1.25,
             "scaleY": 1.0,
             "scaleZ": 1.25
@@ -27658,12 +27965,12 @@
           "GUID": "117831",
           "Name": "Card",
           "Transform": {
-            "posX": 29.3997269,
-            "posY": 3.065437,
-            "posZ": -2.35072017,
-            "rotX": -1.3736293E-08,
-            "rotY": 180.024765,
-            "rotZ": 180.0,
+            "posX": 29.7835178,
+            "posY": 1.107248,
+            "posZ": -2.59017372,
+            "rotX": -0.0007090683,
+            "rotY": 179.992218,
+            "rotZ": 180.0003,
             "scaleX": 1.25,
             "scaleY": 1.0,
             "scaleZ": 1.25
@@ -27699,250 +28006,6 @@
           "HideWhenFaceDown": false,
           "Hands": true,
           "CardID": 1101,
-          "SidewaysCard": false,
-          "CustomDeck": {
-            "11": {
-              "FaceURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271260/874D92D95D3B5DD2C48A81CF3069196483650B0A/",
-              "BackURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271323/EEEB3B116C99CF15A1E434F7C673809A420FF32E/",
-              "NumWidth": 5,
-              "NumHeight": 4,
-              "BackIsHidden": false,
-              "UniqueBack": true,
-              "Type": 0
-            }
-          },
-          "LuaScript": "",
-          "LuaScriptState": "",
-          "XmlUI": ""
-        },
-        {
-          "GUID": "1fdefe",
-          "Name": "Card",
-          "Transform": {
-            "posX": 29.7835217,
-            "posY": 1.00698221,
-            "posZ": -2.59017539,
-            "rotX": 0.0016825702,
-            "rotY": 180.024765,
-            "rotZ": 180.00209,
-            "scaleX": 1.25,
-            "scaleY": 1.0,
-            "scaleZ": 1.25
-          },
-          "Nickname": "Drought",
-          "Description": "",
-          "GMNotes": "",
-          "AltLookAngle": {
-            "x": 0.0,
-            "y": 0.0,
-            "z": 0.0
-          },
-          "ColorDiffuse": {
-            "r": 0.713235259,
-            "g": 0.713235259,
-            "b": 0.713235259
-          },
-          "Tags": [
-            "enchantment"
-          ],
-          "LayoutGroupSortIndex": 0,
-          "Value": 0,
-          "Locked": false,
-          "Grid": true,
-          "Snap": true,
-          "IgnoreFoW": false,
-          "MeasureMovement": false,
-          "DragSelectable": true,
-          "Autoraise": true,
-          "Sticky": true,
-          "Tooltip": true,
-          "GridProjection": false,
-          "HideWhenFaceDown": false,
-          "Hands": true,
-          "CardID": 1117,
-          "SidewaysCard": false,
-          "CustomDeck": {
-            "11": {
-              "FaceURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271260/874D92D95D3B5DD2C48A81CF3069196483650B0A/",
-              "BackURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271323/EEEB3B116C99CF15A1E434F7C673809A420FF32E/",
-              "NumWidth": 5,
-              "NumHeight": 4,
-              "BackIsHidden": false,
-              "UniqueBack": true,
-              "Type": 0
-            }
-          },
-          "LuaScript": "",
-          "LuaScriptState": "",
-          "XmlUI": ""
-        },
-        {
-          "GUID": "89c0e9",
-          "Name": "Card",
-          "Transform": {
-            "posX": 29.7835178,
-            "posY": 0.9788708,
-            "posZ": -2.59017372,
-            "rotX": 0.00231469888,
-            "rotY": 180.024765,
-            "rotZ": 180.00296,
-            "scaleX": 1.25,
-            "scaleY": 1.0,
-            "scaleZ": 1.25
-          },
-          "Nickname": "Natural Balance",
-          "Description": "",
-          "GMNotes": "",
-          "AltLookAngle": {
-            "x": 0.0,
-            "y": 0.0,
-            "z": 0.0
-          },
-          "ColorDiffuse": {
-            "r": 0.713235259,
-            "g": 0.713235259,
-            "b": 0.713235259
-          },
-          "Tags": [
-            "enchantment"
-          ],
-          "LayoutGroupSortIndex": 0,
-          "Value": 0,
-          "Locked": false,
-          "Grid": true,
-          "Snap": true,
-          "IgnoreFoW": false,
-          "MeasureMovement": false,
-          "DragSelectable": true,
-          "Autoraise": true,
-          "Sticky": true,
-          "Tooltip": true,
-          "GridProjection": false,
-          "HideWhenFaceDown": false,
-          "Hands": true,
-          "CardID": 1116,
-          "SidewaysCard": false,
-          "CustomDeck": {
-            "11": {
-              "FaceURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271260/874D92D95D3B5DD2C48A81CF3069196483650B0A/",
-              "BackURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271323/EEEB3B116C99CF15A1E434F7C673809A420FF32E/",
-              "NumWidth": 5,
-              "NumHeight": 4,
-              "BackIsHidden": false,
-              "UniqueBack": true,
-              "Type": 0
-            }
-          },
-          "LuaScript": "",
-          "LuaScriptState": "",
-          "XmlUI": ""
-        },
-        {
-          "GUID": "128f5f",
-          "Name": "Card",
-          "Transform": {
-            "posX": 29.7835178,
-            "posY": 0.9380958,
-            "posZ": -2.59017372,
-            "rotX": 0.000127246982,
-            "rotY": 180.024765,
-            "rotZ": 180.000824,
-            "scaleX": 1.25,
-            "scaleY": 1.0,
-            "scaleZ": 1.25
-          },
-          "Nickname": "Seasons' Turn",
-          "Description": "",
-          "GMNotes": "",
-          "AltLookAngle": {
-            "x": 0.0,
-            "y": 0.0,
-            "z": 0.0
-          },
-          "ColorDiffuse": {
-            "r": 0.713235259,
-            "g": 0.713235259,
-            "b": 0.713235259
-          },
-          "Tags": [
-            "enchantment"
-          ],
-          "LayoutGroupSortIndex": 0,
-          "Value": 0,
-          "Locked": false,
-          "Grid": true,
-          "Snap": true,
-          "IgnoreFoW": false,
-          "MeasureMovement": false,
-          "DragSelectable": true,
-          "Autoraise": true,
-          "Sticky": true,
-          "Tooltip": true,
-          "GridProjection": false,
-          "HideWhenFaceDown": false,
-          "Hands": true,
-          "CardID": 1107,
-          "SidewaysCard": false,
-          "CustomDeck": {
-            "11": {
-              "FaceURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271260/874D92D95D3B5DD2C48A81CF3069196483650B0A/",
-              "BackURL": "http://cloud-3.steamusercontent.com/ugc/2091414776416271323/EEEB3B116C99CF15A1E434F7C673809A420FF32E/",
-              "NumWidth": 5,
-              "NumHeight": 4,
-              "BackIsHidden": false,
-              "UniqueBack": true,
-              "Type": 0
-            }
-          },
-          "LuaScript": "",
-          "LuaScriptState": "",
-          "XmlUI": ""
-        },
-        {
-          "GUID": "75cfbd",
-          "Name": "Card",
-          "Transform": {
-            "posX": 25.3666763,
-            "posY": 0.937492847,
-            "posZ": 2.38188457,
-            "rotX": 0.00326053426,
-            "rotY": 180.027832,
-            "rotZ": 180.029053,
-            "scaleX": 1.25,
-            "scaleY": 1.0,
-            "scaleZ": 1.25
-          },
-          "Nickname": "Force of Destiny",
-          "Description": "",
-          "GMNotes": "",
-          "AltLookAngle": {
-            "x": 0.0,
-            "y": 0.0,
-            "z": 0.0
-          },
-          "ColorDiffuse": {
-            "r": 0.713235259,
-            "g": 0.713235259,
-            "b": 0.713235259
-          },
-          "Tags": [
-            "enchantment"
-          ],
-          "LayoutGroupSortIndex": 0,
-          "Value": 0,
-          "Locked": false,
-          "Grid": true,
-          "Snap": true,
-          "IgnoreFoW": false,
-          "MeasureMovement": false,
-          "DragSelectable": true,
-          "Autoraise": true,
-          "Sticky": true,
-          "Tooltip": true,
-          "GridProjection": false,
-          "HideWhenFaceDown": false,
-          "Hands": true,
-          "CardID": 1110,
           "SidewaysCard": false,
           "CustomDeck": {
             "11": {
@@ -28697,9 +28760,9 @@
       "GUID": "a7ee19",
       "Name": "3DText",
       "Transform": {
-        "posX": -5.085572,
-        "posY": 0.9610976,
-        "posZ": -3.99530864,
+        "posX": -5.085861,
+        "posY": 0.961079359,
+        "posZ": -3.9953506,
         "rotX": 90.0,
         "rotY": 1.15148364E-12,
         "rotZ": 0.0,
@@ -28751,9 +28814,9 @@
       "GUID": "adfe86",
       "Name": "3DText",
       "Transform": {
-        "posX": -2.00444031,
-        "posY": 0.961096764,
-        "posZ": -3.99529624,
+        "posX": -2.00473046,
+        "posY": 0.9610787,
+        "posZ": -3.99533248,
         "rotX": 90.0,
         "rotY": 1.15148364E-12,
         "rotZ": 0.0,
@@ -28859,8 +28922,8 @@
       "GUID": "0a9eec",
       "Name": "3DText",
       "Transform": {
-        "posX": -8.218507,
-        "posY": 0.9611508,
+        "posX": -8.218792,
+        "posY": 0.9611608,
         "posZ": 9.992508,
         "rotX": 90.0,
         "rotY": 0.0,
@@ -28913,9 +28976,9 @@
       "GUID": "0f525b",
       "Name": "3DText",
       "Transform": {
-        "posX": -2.000412,
-        "posY": 0.499974281,
-        "posZ": -4.00005245,
+        "posX": -2.00070214,
+        "posY": 0.499956131,
+        "posZ": -4.00008774,
         "rotX": 90.0,
         "rotY": -1.2541615E-07,
         "rotZ": 0.0,
@@ -28967,9 +29030,9 @@
       "GUID": "1117ad",
       "Name": "3DText",
       "Transform": {
-        "posX": -5.090416,
-        "posY": 0.499974042,
-        "posZ": -4.00005245,
+        "posX": -5.09070635,
+        "posY": 0.499955922,
+        "posZ": -4.00008774,
         "rotX": 90.0,
         "rotY": -1.2541615E-07,
         "rotZ": 0.0,
@@ -29186,9 +29249,9 @@
         "posX": 31.8746014,
         "posY": 0.974506438,
         "posZ": -18.1235847,
-        "rotX": -4.72274166E-07,
+        "rotX": 2.442723E-07,
         "rotY": 180.0,
-        "rotZ": 2.7226514E-07,
+        "rotZ": -1.469325E-08,
         "scaleX": 0.335945159,
         "scaleY": 1.0,
         "scaleZ": 0.335945159
@@ -29247,11 +29310,11 @@
       "Name": "Custom_Tile_Stack",
       "Transform": {
         "posX": 31.8117027,
-        "posY": 0.924506545,
+        "posY": 0.9245066,
         "posZ": -16.3919754,
-        "rotX": 1.88747023E-07,
+        "rotX": 2.74900174E-07,
         "rotY": 180.00145,
-        "rotZ": -1.17440237E-07,
+        "rotZ": -1.00559191E-07,
         "scaleX": 0.32,
         "scaleY": 1.0,
         "scaleZ": 0.32
@@ -29312,9 +29375,9 @@
         "posX": 28.83802,
         "posY": 0.974506438,
         "posZ": -16.4715538,
-        "rotX": -5.15052641E-08,
+        "rotX": 2.04052284E-07,
         "rotY": 180.00061,
-        "rotZ": 4.81980635E-07,
+        "rotZ": -1.6213877E-06,
         "scaleX": 0.434757948,
         "scaleY": 1.0,
         "scaleZ": 0.434757948
@@ -29375,9 +29438,9 @@
         "posX": 35.4847946,
         "posY": 0.974506557,
         "posZ": -17.1192875,
-        "rotX": -6.723934E-07,
+        "rotX": -3.24436041E-06,
         "rotY": 179.963028,
-        "rotZ": 2.01326634E-06,
+        "rotZ": -4.190337E-07,
         "scaleX": 0.7152412,
         "scaleY": 1.0,
         "scaleZ": 0.7152412
@@ -29440,7 +29503,7 @@
           "Rotation": {
             "x": -1.981969E-05,
             "y": 359.909668,
-            "z": -6.88791033E-06
+            "z": -6.887895E-06
           },
           "Tags": [
             "water",
@@ -29476,7 +29539,7 @@
             "z": -0.70117563
           },
           "Rotation": {
-            "x": 2.298507E-05,
+            "x": 2.29851048E-05,
             "y": 359.9719,
             "z": 4.056455E-06
           },
@@ -29489,6 +29552,1039 @@
           ]
         }
       ]
+    },
+    {
+      "GUID": "62d1f0",
+      "Name": "3DText",
+      "Transform": {
+        "posX": 2.174744,
+        "posY": 0.961132169,
+        "posZ": 4.55878,
+        "rotX": 90.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "Text": {
+        "Text": "Place unused\ndice here",
+        "colorstate": {
+          "r": 0.831372559,
+          "g": 0.831372559,
+          "b": 0.831372559
+        },
+        "fontSize": 24
+      },
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "821815",
+      "Name": "BlockSquare",
+      "Transform": {
+        "posX": 2.19,
+        "posY": 0.9295064,
+        "posZ": 3.33,
+        "rotX": 2.51738079E-08,
+        "rotY": -7.17115523E-09,
+        "rotZ": -4.274957E-08,
+        "scaleX": 1.0,
+        "scaleY": 0.01,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 0.482578456,
+        "g": 0.482578456,
+        "b": 0.482578456
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "7c9ed6",
+      "Name": "BlockSquare",
+      "Transform": {
+        "posX": 5.95,
+        "posY": 0.929506361,
+        "posZ": -14.34,
+        "rotX": 6.136111E-08,
+        "rotY": -3.371949E-09,
+        "rotZ": -7.066412E-08,
+        "scaleX": 1.0,
+        "scaleY": 0.01,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 0.482578456,
+        "g": 0.482578456,
+        "b": 0.482578456
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "28951d",
+      "Name": "BlockSquare",
+      "Transform": {
+        "posX": -25.26,
+        "posY": 0.9295064,
+        "posZ": -14.34,
+        "rotX": 1.95207562E-07,
+        "rotY": 5.713989E-06,
+        "rotZ": -2.784765E-07,
+        "scaleX": 1.0,
+        "scaleY": 0.01,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 0.482578456,
+        "g": 0.482578456,
+        "b": 0.482578456
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "e87019",
+      "Name": "BlockSquare",
+      "Transform": {
+        "posX": -13.42,
+        "posY": 0.9295064,
+        "posZ": 15.02,
+        "rotX": 1.94001231E-07,
+        "rotY": -3.05564329E-09,
+        "rotZ": -3.0925537E-07,
+        "scaleX": 1.0,
+        "scaleY": 0.01,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 0.482578456,
+        "g": 0.482578456,
+        "b": 0.482578456
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "0b68ad",
+      "Name": "BlockSquare",
+      "Transform": {
+        "posX": 17.77,
+        "posY": 0.9295064,
+        "posZ": 15.02,
+        "rotX": 2.67912E-07,
+        "rotY": -3.14394666E-09,
+        "rotZ": -2.61310731E-07,
+        "scaleX": 1.0,
+        "scaleY": 0.01,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 0.482578456,
+        "g": 0.482578456,
+        "b": 0.482578456
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "ea859b",
+      "Name": "3DText",
+      "Transform": {
+        "posX": 5.94974327,
+        "posY": 0.9610985,
+        "posZ": -13.4700575,
+        "rotX": 90.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "Text": {
+        "Text": "Selected Dice",
+        "colorstate": {
+          "r": 0.831372559,
+          "g": 0.831372559,
+          "b": 0.831372559
+        },
+        "fontSize": 24
+      },
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "516b1f",
+      "Name": "3DText",
+      "Transform": {
+        "posX": -25.26053,
+        "posY": 0.9610993,
+        "posZ": -13.4700575,
+        "rotX": 90.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "Text": {
+        "Text": "Selected Dice",
+        "colorstate": {
+          "r": 0.831372559,
+          "g": 0.831372559,
+          "b": 0.831372559
+        },
+        "fontSize": 24
+      },
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "6170a1",
+      "Name": "3DText",
+      "Transform": {
+        "posX": -13.4204988,
+        "posY": 0.9611516,
+        "posZ": 14.1400461,
+        "rotX": 90.0,
+        "rotY": 180.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "Text": {
+        "Text": "Selected Dice",
+        "colorstate": {
+          "r": 0.831372559,
+          "g": 0.831372559,
+          "b": 0.831372559
+        },
+        "fontSize": 24
+      },
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "ef8ba4",
+      "Name": "3DText",
+      "Transform": {
+        "posX": 17.7698956,
+        "posY": 0.961151242,
+        "posZ": 14.1400051,
+        "rotX": 90.0,
+        "rotY": 180.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "Text": {
+        "Text": "Selected Dice",
+        "colorstate": {
+          "r": 0.831372559,
+          "g": 0.831372559,
+          "b": 0.831372559
+        },
+        "fontSize": 24
+      },
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "4f1cb7",
+      "Name": "3DText",
+      "Transform": {
+        "posX": -3.53021264,
+        "posY": 0.9611424,
+        "posZ": 11.2097225,
+        "rotX": 90.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "Text": {
+        "Text": "Roll Dice",
+        "colorstate": {
+          "r": 0.831372559,
+          "g": 0.831372559,
+          "b": 0.831372559
+        },
+        "fontSize": 24
+      },
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "9439cf",
+      "Name": "ScriptingTrigger",
+      "Transform": {
+        "posX": 2.18701816,
+        "posY": 1.19735241,
+        "posZ": 3.33972359,
+        "rotX": 0.0,
+        "rotY": 180.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 0.5,
+        "scaleZ": 1.0
+      },
+      "Nickname": "Advance Time",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 0.509803951
+      },
+      "Tags": [
+        "air",
+        "earth",
+        "fire",
+        "water"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "Utility = nil\r\n\r\nfunction onload()\r\n    Utility = getObjectFromGUID('47fd87')\r\nend\r\n\r\nfunction advanceTime()\r\n    local objects = self.getObjects()\r\n    if #objects == 0 then\r\n        print('Could not automatically advance the round because no dice was placed in the unused dice spot.')\r\n        return\r\n    end\r\n    local advanceTimeCount = objects[1].getRotationValue()\r\n    local round = Utility.call('getRound')\r\n    local newRound = Utility.call('getRound') + advanceTimeCount\r\n\r\n    local message = 'Starting a new round in '\r\n    if newRound > 12 then\r\n        local year = advanceYear()\r\n        message = message .. 'year ' .. year .. ', '\r\n        newRound = newRound - 12\r\n    end\r\n\r\n    local season = Utility.call('getSeason', round)\r\n    local newSeason = Utility.call('getSeason', newRound)\r\n    if season ~= newSeason then\r\n        greenPrint('The season changed to ' .. newSeason .. '.')\r\n    end\r\n\r\n    message = message .. 'month ' .. newRound .. '.'\r\n    greenPrint(message)\r\n    Utility.call('moveRound', newRound)\r\nend\r\n\r\nfunction advanceYear()\r\n    local year = Utility.call('getYear') + 1\r\n    Utility.call('moveYear', year)\r\n    dealLibraryCards(year)\r\n    return year\r\nend\r\n\r\nfunction dealLibraryCards(year)\r\n    local romanYear = 'ii'\r\n    if year == 3 then romanYear = 'iii' end\r\n    local cardsWereDealt = false\r\n\r\n    for _, player in ipairs(Player.getPlayers()) do\r\n        local zone = getObjectsWithAllTags({'base', romanYear, player.color })[1]\r\n        for _, object in ipairs(zone.getObjects()) do\r\n            if object.type == 'Deck' then\r\n                object.deal(4, player.color)\r\n                cardsWereDealt = true\r\n            end\r\n        end\r\n    end\r\n    if cardsWereDealt == true then\r\n        print('Dealing year ' .. year .. ' cards from player libraries.')\r\n    end\r\nend\r\n\r\nfunction greenPrint(message)\r\n    printToAll(message, stringColorToRGB('Green'))\r\nend",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "721216",
+      "Name": "ScriptingTrigger",
+      "Transform": {
+        "posX": -9.89928,
+        "posY": 1.3,
+        "posZ": -15.8461456,
+        "rotX": 0.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 0.509803951
+      },
+      "Tags": [
+        "base",
+        "enchanted kingdom",
+        "ii",
+        "path of destiny",
+        "Pink",
+        "promo"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "1e3fb8",
+      "Name": "ScriptingTrigger",
+      "Transform": {
+        "posX": -6.86655664,
+        "posY": 1.3,
+        "posZ": -15.83,
+        "rotX": 0.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 0.509803951
+      },
+      "Tags": [
+        "base",
+        "enchanted kingdom",
+        "iii",
+        "path of destiny",
+        "Pink",
+        "promo"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "677cdc",
+      "Name": "ScriptingTrigger",
+      "Transform": {
+        "posX": 21.2926064,
+        "posY": 1.3,
+        "posZ": -15.83,
+        "rotX": 0.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 0.509803951
+      },
+      "Tags": [
+        "base",
+        "enchanted kingdom",
+        "ii",
+        "path of destiny",
+        "promo",
+        "White"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "fd5e14",
+      "Name": "ScriptingTrigger",
+      "Transform": {
+        "posX": 24.4948521,
+        "posY": 1.3,
+        "posZ": -15.83,
+        "rotX": 0.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 0.509803951
+      },
+      "Tags": [
+        "base",
+        "enchanted kingdom",
+        "iii",
+        "path of destiny",
+        "promo",
+        "White"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "367872",
+      "Name": "ScriptingTrigger",
+      "Transform": {
+        "posX": 3.08624148,
+        "posY": 1.3,
+        "posZ": 16.21,
+        "rotX": 0.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 0.509803951
+      },
+      "Tags": [
+        "base",
+        "enchanted kingdom",
+        "ii",
+        "path of destiny",
+        "promo",
+        "Yellow"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "c2015c",
+      "Name": "ScriptingTrigger",
+      "Transform": {
+        "posX": 0.0667687058,
+        "posY": 1.3,
+        "posZ": 16.21,
+        "rotX": 0.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 0.509803951
+      },
+      "Tags": [
+        "base",
+        "enchanted kingdom",
+        "iii",
+        "path of destiny",
+        "promo",
+        "Yellow"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "5c7ee1",
+      "Name": "ScriptingTrigger",
+      "Transform": {
+        "posX": -28.2206173,
+        "posY": 1.3,
+        "posZ": 16.21,
+        "rotX": 0.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 0.509803951
+      },
+      "Tags": [
+        "base",
+        "enchanted kingdom",
+        "ii",
+        "Orange",
+        "path of destiny",
+        "promo"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "37fc44",
+      "Name": "ScriptingTrigger",
+      "Transform": {
+        "posX": -31.3166389,
+        "posY": 1.3,
+        "posZ": 16.21,
+        "rotX": 0.0,
+        "rotY": 0.0,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 0.509803951
+      },
+      "Tags": [
+        "base",
+        "enchanted kingdom",
+        "iii",
+        "Orange",
+        "path of destiny",
+        "promo"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
     }
   ]
 }
