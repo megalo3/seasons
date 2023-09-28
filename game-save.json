@@ -1,7 +1,7 @@
 {
   "SaveName": "Seasons",
-  "EpochTime": 1695938656,
-  "Date": "9/28/2023 5:04:16 PM",
+  "EpochTime": 1695940817,
+  "Date": "9/28/2023 5:40:17 PM",
   "VersionNumber": "v13.2.2",
   "GameMode": "Seasons",
   "GameType": "Game",
@@ -401,7 +401,7 @@
       "Size": 3.5
     }
   ],
-  "LuaScript": "WorkshopId = '3035709037'\r\nsettings = {\r\n    difficulty = 'advanced',\r\n    enchantedKingdom = true,\r\n    pathOfDestiny = true,\r\n    promos = true,\r\n    enchantmentCards = true,\r\n    specialAbilityTokens = true,\r\n    setupComplete = false,\r\n    playerTurn = 'White',\r\n    changingTurns = false,\r\n    enchantmentCard = '',\r\n    specialAbility = {\r\n        White = '',\r\n        Pink = '',\r\n        Orange = '',\r\n        Yellow = ''\r\n    }\r\n}\r\n\r\nDrawPilePos = {-5.00, 2.5, -6.50}\r\nDiscardPilePos = {-2.00, 2.5, -6.50}\r\nCards = nil\r\nPlayers = {\r\n    White = {\r\n        FirstPlayer = {-0.60, 1, -16.50},\r\n        SpecialR = { 0.00, 180.00, 0.00 },\r\n        TableauX = { 6.15, 9.15, 12.15, 15.15, 18.15 },\r\n        TableauZ = { -2.38, -6.49, -10.57 }\r\n    },\r\n    Pink = {\r\n        FirstPlayer = {-31.71, 1, -16.50},\r\n        SpecialR = { 0.00, 180.00, 0.00 },\r\n        TableauX = {-25.07, -22.07, -19.07, -16.07, -13.07 },\r\n        TableauZ = {-2.38, -6.49, -10.57 }\r\n    },\r\n    Orange = {\r\n        FirstPlayer = {-6.86, 1, 16.99},\r\n        SpecialR = { 0.00, 0.00, 0.00 },\r\n        TableauX = { -13.07, -16.07, -19.07, -22.07, -25.07 },\r\n        TableauZ = { 3.30, 7.42, 11.52 }\r\n    },\r\n    Yellow = {\r\n        FirstPlayer = {24.45, 1, 16.99},\r\n        SpecialR = { 0.00, 0.00, 0.00 },\r\n        TableauX = { 18.15, 15.15, 12.15, 9.15, 6.15 },\r\n        TableauZ = { 3.30, 7.42, 11.52 }\r\n    }\r\n}\r\n\r\nDrawDeckZone = nil\r\nDiceBag = nil\r\nUtility = nil\r\nEnchantmentScript = nil\r\nDiceRollerScript = nil\r\nSpecialAbilityScript = nil\r\nDraftScript = nil\r\nDataScript = nil\r\nAdvanceTimeScript = nil\r\nScorePadScript = nil\r\n\r\nfunction onLoad(saveState)\r\n    AdvanceTimeScript = getObjectFromGUID('9439cf')\r\n    DrawDeckZone = getObjectFromGUID('00a61b')\r\n    DiceBag = getObjectsWithAllTags({'unused'})[1]\r\n    DataScript = getObjectFromGUID('97996f')\r\n    Utility = getObjectFromGUID('47fd87')\r\n    EnchantmentScript = getObjectFromGUID('8bb3b2')\r\n    DiceRollerScript = getObjectFromGUID('17754c')\r\n    SpecialAbilityScript = getObjectFromGUID('a3ee11')\r\n    DraftScript = getObjectFromGUID('0f55a3')\r\n    Cards = DataScript.getTable('Cards')\r\n    ScorePadScript = getObjectFromGUID('7f10ce')\r\n\r\n    local loadedData = JSON.decode(saveState)\r\n    if loadedData ~= nil then\r\n        settings = loadedData\r\n    end\r\n\r\n    math.randomseed(os.time())\r\n    -- Set items uninteractable\r\n    for key, object in ipairs(getObjectsWithTag('noninteractable')) do\r\n        object.interactable = false\r\n    end\r\n\r\n    if settings.setupComplete == false then\r\n        setupMenu('true')\r\n        -- scorePadMenu('true')\r\n        yellowPrint('Hidden zone opacity can be changed in Menu -> Configuration -> Interface -> Misc. Settings -> Hidden Zone Hide Opacity.')\r\n        print('Players may choose a specific Enchantment card and place it in the Enchantment card slot. If not, an Enchantment card will be randomly selected.')\r\n    end\r\nend\r\n\r\nfunction onSave()\r\n    return JSON.encode(settings)\r\nend\r\n\r\nfunction onPlayerTurn(player, previous_player)\r\n    if settings.setupComplete == false then return end\r\n    if settings.playerTurn == player.color and settings.changingTurns == false then\r\n        local next = Turns.getNextTurnColor()\r\n        settings.changingTurns = true\r\n        settings.playerTurn = next\r\n        Turns.turn_color = next\r\n        moveFirstPlayerToken()\r\n        AdvanceTimeScript.call('advanceTime')\r\n        print('First player moves to the next player.')\r\n    else\r\n        settings.changingTurns = false\r\n    end\r\nend\r\n\r\nfunction setupMenu(value)\r\n    UI.setAttribute('optionsMenu1', 'active', value)\r\n    UI.setAttribute('optionsMenu2', 'active', value)\r\n    UI.setAttribute('optionsMenu3', 'active', value)\r\nend\r\n\r\nfunction startingPlayerMenu(value)\r\n    UI.setAttribute('startPlayerMenu', 'active', value)\r\n    UI.setAttribute('startPlayerMenuButtons', 'active', value)\r\nend\r\n\r\nfunction gatherItemsMenu(value)\r\n    UI.setAttribute('gatherItemsMenu', 'active', 'true')\r\nend\r\n\r\nfunction scorePadMenu(value)\r\n    ScorePadScript.call('setAllTotals')\r\n    UI.setAttribute('ScorepadMenu', 'active', 'true')\r\nend\r\n\r\nfunction uiToggle(player, value, id)\r\n    if id == 'beginner' or id == 'intermediate' or id == 'advanced' then\r\n        if value == 'True' then\r\n            settings.difficulty = id\r\n        end\r\n    else\r\n        if value == 'True' then\r\n            settings[id] = true\r\n        else\r\n            settings[id] = false\r\n        end\r\n    end\r\nend\r\n\r\nfunction setup()\r\n    setupMenu('false')\r\n\r\n    if settings.enchantmentCards == true then\r\n        EnchantmentScript.call('dealEnchantmentCard')\r\n    else\r\n        EnchantmentScript.call('removeEnchantment')\r\n    end\r\n    if settings.enchantmentCard == 'Vision of Destiny' then\r\n        DrawPilePos[1] = DrawPilePos[1] - 3\r\n        DiscardPilePos[1] = DiscardPilePos[1] - 3\r\n        local drawDeckPos = DrawDeckZone.getPosition()\r\n        DrawDeckZone.setPosition({drawDeckPos[1] - 3, drawDeckPos[2], drawDeckPos[3]})\r\n        yellowPrint('Vision of Destiny Enchantment')\r\n        yellowPrint('The top two Power cards in the draw pile are systematically revealed and placed in a row next to the draw. The card farthest from the draw is considered to be the top card in the draw, and the other face-up card is deemed the second card in the draw.')\r\n    end\r\n\r\n    local baseDeck = getObjectsWithAllTags({'Deck', 'base'})[1]\r\n\r\n    if settings.difficulty == 'intermediate' or settings.difficulty == 'beginner' then\r\n        for index, card in ipairs(baseDeck.getObjects()) do\r\n            local info = Cards[card.name]\r\n            if info.Number < 31 then\r\n                Wait.frames(function()\r\n                    baseDeck.takeObject({\r\n                        guid = card.guid,\r\n                        position = DrawPilePos\r\n                    })\r\n                end, index*3)\r\n            end\r\n        end\r\n    end\r\n    local waitTime = 3\r\n    if settings.difficulty == 'advanced' then\r\n        baseDeck.setPositionSmooth(DrawPilePos)\r\n        waitTime = 1.3\r\n    end\r\n\r\n    Wait.time(function()\r\n        local deck = getDrawDeck()\r\n        if settings.pathOfDestiny == true then\r\n            deck.putObject(getObjectsWithAllTags({'Deck', 'path of destiny'})[1])\r\n        end\r\n        if settings.enchantedKingdom == true then\r\n            deck.putObject(getObjectsWithAllTags({'Deck', 'enchanted kingdom'})[1])\r\n        end\r\n        if settings.promos == true then\r\n            deck.putObject(getObjectsWithAllTags({'promo'})[1])\r\n        end\r\n        Wait.time(function()\r\n            deck.shuffle()\r\n\r\n            if settings.enchantmentCard == 'Vision of Destiny' then\r\n                visionOfDestinyShift()\r\n            end\r\n\r\n            getObjectFromGUID('7982cf').setValue('Prelude')\r\n            yellowPrint('The Prelude phase has begun.')\r\n            if settings.specialAbilityTokens == true then\r\n                SpecialAbilityScript.call('dealSpecialAbilityTokens')\r\n            end\r\n            DraftScript.call('dealStartingHand')\r\n        end, 1.7)\r\n    end, waitTime)\r\nend\r\n\r\nfunction visionOfDestinyShift()\r\n    local deck = getDrawDeck()\r\n\r\n    local topCardText = getObjectFromGUID('0f525b')\r\n    local topCardTextPos = topCardText.getPosition()\r\n    topCardText.setPositionSmooth({topCardTextPos[1], 1, topCardTextPos[3]})\r\n\r\n    local secondDrawText = getObjectFromGUID('1117ad')\r\n    local secondDrawTextPos = secondDrawText.getPosition()\r\n    secondDrawText.setPositionSmooth({secondDrawTextPos[1], 1, secondDrawTextPos[3]})\r\n\r\n    local drawText = getObjectFromGUID('a7ee19')\r\n    local drawTextPos = drawText.getPosition()\r\n    drawText.setPositionSmooth({drawTextPos[1]-3, drawTextPos[2], drawTextPos[3]})\r\n\r\n    local discardText = getObjectFromGUID('adfe86')\r\n    local discardTextPos = discardText.getPosition()\r\n    discardText.setPositionSmooth({discardTextPos[1]+3, discardTextPos[2], discardTextPos[3]})\r\n\r\n    deck.takeObject({\r\n        flip = true,\r\n        position = DiscardPilePos\r\n    })\r\n    deck.takeObject({\r\n        flip = true,\r\n        position = {DiscardPilePos[1]+3, DiscardPilePos[2], DiscardPilePos[3]}\r\n    })\r\n    resetTableGrid()\r\nend\r\n\r\nfunction setLibraryCards()\r\n    getDrawDeck().setName('Draw Deck')\r\n    local deckSize = 3\r\n    if settings.enchantmentCard == 'Extended Experience' then\r\n        deckSize = 4\r\n    end\r\n    print('Players must put ' .. deckSize .. ' cards under library II and ' .. deckSize .. ' cards under library III.')\r\n    if settings.specialAbilityTokens == true then\r\n        printToAll('Players must select their special ability token if they have not yet.', stringColorToRGB('Pink'))\r\n    end\r\n\r\n    startingPlayerMenu('true')\r\nend\r\n\r\nfunction startTournament()\r\n    settings.changingTurns = true\r\n    Turns.turn_color = settings.playerTurn\r\n\r\n    removeTwistOfFate()\r\n    DataScript.call('setCardEffects')\r\n\r\n    getObjectFromGUID('7982cf').setValue('Tournament')\r\n    startingPlayerMenu('false')\r\n    gatherItemsMenu('true')\r\n\r\n    local playerCount = #Player.getPlayers()\r\n    local diceRemovalCount = 4 - playerCount\r\n    local elements = {'air', 'earth', 'fire', 'water'}\r\n\r\n    for index, element in ipairs(elements) do\r\n        for x=1, diceRemovalCount do\r\n            Wait.time(function()\r\n                removeRandomDie(element)\r\n            end, (x - 1) * 1.5)\r\n        end\r\n    end\r\n\r\n    -- sort dice\r\n    Wait.time(function()\r\n        DiceRollerScript.call('returnDice', {'water', 'earth', 'fire', 'air'})\r\n    end, (diceRemovalCount - 1) * 2)\r\n\r\n    settings.setupComplete = true\r\n    yellowPrint('The Tournament has begun.')\r\n    moveFirstPlayerToken()\r\nend\r\n\r\nfunction removeTwistOfFate()\r\n -- Remove Twist of Fate on game start\r\n    local deck = getDrawDeck();\r\n    for _, card in ipairs(getDrawDeck().getObjects()) do\r\n        if card.name == 'Twist of Fate' then\r\n            DiceBag.putObject(\r\n                deck.takeObject({guid = card.guid})\r\n            )\r\n        end\r\n    end\r\nend\r\n\r\nfunction removeRandomDie(element)\r\n    local dice = getObjectsWithAllTags({'Die', element})\r\n    local random = Utility.call('rand', #dice)\r\n    DiceBag.putObject(dice[random])\r\nend\r\n\r\nfunction moveFirstPlayerToken()\r\n    local token = getObjectsWithAllTags({'first player token'})[1]\r\n    token.setPositionSmooth(Players[settings.playerTurn].FirstPlayer)\r\n    token.setRotationSmooth(Players[settings.playerTurn].SpecialR)\r\nend\r\n\r\nfunction startingPlayerSelected(player, value, id)\r\n    local colorOrder = {\r\n        White = 'Pink',\r\n        Pink = 'Orange',\r\n        Orange = 'Yellow',\r\n        Yellow = 'White'\r\n    }\r\n    local nonSeated = Utility.call('getNonSeatedPlayerColors')\r\n    for x=1,3 do\r\n        if has_value(nonSeated, value) == true then\r\n            value = colorOrder[value]\r\n        end\r\n    end\r\n    settings.playerTurn = value\r\nend\r\n\r\nfunction getDrawDeck()\r\n    return Utility.call('getDeckFromZone', DrawDeckZone)\r\nend\r\n\r\nfunction yellowPrint(message)\r\n    printToAll(message, stringColorToRGB('Yellow'))\r\nend\r\n\r\nTokenBags = {\r\n    air = 'a0c85d',\r\n    fire = 'ecfadc',\r\n    water = 'd2a187',\r\n    earth = 'f61095',\r\n}\r\nTokenBags['decrease energy'] = '9a6508'\r\n\r\nfunction spawnitem(player, b, id)\r\n    if id == 'air' or id == 'earth' or id == 'water' or id == 'fire' then\r\n        spawnElement(player, id)\r\n    elseif id == 'crystal' then\r\n        changeCrystals('positive', player)\r\n    elseif id == 'summongauge' then\r\n        moveSummonGauge('positive', player)\r\n    end\r\nend\r\n\r\nfunction despawnitem(player, b, id)\r\n    if id == 'air' or id == 'earth' or id == 'water' or id == 'fire' then\r\n        despawnElement(player, id)\r\n    elseif id == 'crystal' then\r\n        changeCrystals('negative', player)\r\n    elseif id == 'summongauge' then\r\n        moveSummonGauge('negative', player)\r\n    end\r\nend\r\n\r\nfunction changeCrystals(direction, player)\r\n    local crystals = getObjectsWithAllTags({player.color, 'crystals'})[1]\r\n    local value = crystals.getValue()\r\n    local increment = 1\r\n    if direction == 'negative' then increment = -1 end\r\n    local newValue = value + increment\r\n    if newValue < 0 then\r\n        yellowPrint('Crystal count can not go below 0.')\r\n        return\r\n    end\r\n    local incdec = 'gained'\r\n    if direction == 'negative' then incdec = 'removed' end\r\n    local message = player.color .. \" player has \" .. incdec .. \" 1 crystal with a total of \" .. newValue .. \" crystals.\"\r\n    printToAll(message, stringColorToRGB(player.color))\r\n\r\n    crystals.setValue(newValue)\r\nend\r\n\r\nfunction moveSummonGauge(direction, player)\r\n    function sortBlockX(a,b)\r\n        return a[1] < b[1]\r\n    end\r\n    function roundPosition(position)\r\n        return {\r\n            round(position[1], 3),\r\n            round(position[2]+.3, 3),\r\n            round(position[3], 3)\r\n        }\r\n    end\r\n\r\n    local board = getObjectsWithAllTags({player.color, 'player board'})[1]\r\n    local block = getObjectsWithAllTags({player.color, 'summon gauge'})[1]\r\n    local blockPosition = roundPosition(block.getPosition())\r\n    local gaugeIndex = 0\r\n    local points = {}\r\n    for _, point in ipairs(board.getSnapPoints()) do\r\n        if has_value(point.tags, 'summon gauge') then\r\n            local position = board.positionToWorld(point.position)\r\n            local roundedPosition = roundPosition(position)\r\n            table.insert(points, roundedPosition)\r\n        end\r\n    end\r\n    table.sort(points, sortBlockX)\r\n\r\n    for index, point in ipairs(points) do\r\n        if (point[1] == blockPosition[1]) then\r\n            gaugeIndex = index\r\n        end\r\n    end\r\n\r\n    if gaugeIndex == 0 then return end\r\n    if direction == 'positive' then\r\n        if gaugeIndex > 15 then\r\n            yellowPrint('You increase your summoning gauge past 15.')\r\n            return;\r\n        end\r\n        printToAll(player.color .. \" player increased their summoning gauge to \" .. gaugeIndex .. '.', stringColorToRGB(player.color))\r\n        block.setPositionSmooth(points[gaugeIndex + 1], false, true)\r\n    elseif direction == 'negative' then\r\n        if gaugeIndex <= 1 then\r\n            yellowPrint('You cannot reduce your summoning gauge below 0.')\r\n            return;\r\n        end\r\n        printToAll(player.color .. \" player decreerased their summoning gauge to \" .. gaugeIndex -2 .. '.', stringColorToRGB(player.color))\r\n        block.setPositionSmooth(points[gaugeIndex - 1], false, true)\r\n    end\r\nend\r\n\r\nfunction spawnElement(player, element)\r\n    local remainingSpace = getRemainingTokenSpace(player.color)\r\n    if remainingSpace == 0 then\r\n        yellowPrint(player.color .. ' has no space left for energy.')\r\n        return\r\n    end\r\n\r\n    moveTokensLeft(player.color)\r\n\r\n    local totalSlots = getTokenSlotCount(player.color)\r\n    local snapPositionIndex = totalSlots - remainingSpace + 1\r\n\r\n    local positions = getPointPositions(player.color)\r\n\r\n    local bag = getObjectFromGUID(TokenBags[element])\r\n    bag.takeObject({\r\n        position = positions[snapPositionIndex],\r\n        rotation = Players[player.color].SpecialR,\r\n        smooth = false\r\n    })\r\n    printToAll(player.color .. ' player gained ' .. element .. ' energy.', stringColorToRGB(player.color))\r\nend\r\n\r\nfunction despawnElement(player, element)\r\n    for _, token in ipairs(getTokens(player.color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag == element then\r\n            destroyObject(token)\r\n            printToAll(player.color .. ' player spent ' .. element .. ' energy.', stringColorToRGB(player.color))\r\n            Wait.frames(function()\r\n                moveTokensLeft(player.color)\r\n            end, 10)\r\n            return\r\n        end\r\n    end\r\n    yellowPrint(player.color .. ' has no ' .. element .. ' energy to spend.')\r\nend\r\n\r\nfunction resetTableGrid()\r\n    getObjectFromGUID('4ee1f2').call('onLoad')\r\nend\r\n\r\nfunction has_value(tab, val)\r\n    for index, value in ipairs(tab) do\r\n        if value == val then\r\n            return true\r\n        end\r\n    end\r\n    return false\r\nend\r\n\r\nTokenZones = {\r\n    White = '2b8d13',\r\n    Pink = 'b5eb64',\r\n    Orange = '879ee3',\r\n    Yellow = '4b2d0e'\r\n}\r\nfunction getPointPositions(color)\r\n    local points = {}\r\n    for _, point in ipairs(Global.getSnapPoints()) do\r\n        if has_value(point.tags, color) == true then\r\n            table.insert(points, point.position)\r\n        end\r\n    end\r\n\r\n    local grimoire = nil\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag == 'grimoire' then grimoire = token end\r\n    end\r\n\r\n    if grimoire ~= nil then\r\n        for _, point in ipairs(grimoire.getSnapPoints()) do\r\n            table.insert(points, grimoire.positionToWorld(point.position))\r\n        end\r\n    end\r\n\r\n    return points\r\nend\r\n\r\nfunction getTokens(color)\r\n    local zone = getObjectFromGUID(TokenZones[color])\r\n    return zone.getObjects()\r\nend\r\n\r\nfunction getTokenCount(color)\r\n    local count = {\r\n        air = 0,\r\n        fire = 0,\r\n        water = 0,\r\n        earth = 0,\r\n        grimoire = 0\r\n    }\r\n    count['decrease energy'] = 0\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if token.type ~= 'Dice' then\r\n            count[tag] = count[tag] + 1\r\n        end\r\n    end\r\n    return count\r\nend\r\n\r\nfunction getRemainingTokenSpace(color)\r\n    local count = getTokenCount(color)\r\n    local total = count.air + count.fire + count.water + count.earth + count['decrease energy']\r\n    local max = 7\r\n    if count.grimoire > 0 then max = 10 end\r\n    return max - total\r\nend\r\n\r\nfunction hasGrimoire(color)\r\n    return getTokenCount(color).grimoire > 0\r\nend\r\n\r\nfunction getTokenSlotCount(color)\r\n    local count = 7\r\n    if hasGrimoire(color) == true then\r\n        count = 10\r\n    end\r\n    return count\r\nend\r\n\r\nfunction moveTokensLeft(color)\r\n    local slot = 1\r\n    local positions = getPointPositions(color)\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag ~= 'grimoire' and token.type ~= 'Dice' then\r\n            token.setPositionSmooth(positions[slot])\r\n            slot = slot + 1\r\n        end\r\n    end\r\nend\r\n\r\nfunction round(number, places)\r\n    local mult = 10^(places or 0)\r\n    return math.floor(number * mult + 0.5) / mult\r\nend\r\n\r\nfunction scoreChange(player, value, id)\r\n    ScorePadScript.call('scoreChange', { id = id, value = value })\r\nend",
+  "LuaScript": "WorkshopId = '3035709037'\r\nsettings = {\r\n    difficulty = 'advanced',\r\n    enchantedKingdom = true,\r\n    pathOfDestiny = true,\r\n    promos = true,\r\n    enchantmentCards = true,\r\n    specialAbilityTokens = true,\r\n    setupComplete = false,\r\n    playerTurn = 'White',\r\n    changingTurns = false,\r\n    enchantmentCard = '',\r\n    specialAbility = {\r\n        White = '',\r\n        Pink = '',\r\n        Orange = '',\r\n        Yellow = ''\r\n    }\r\n}\r\n\r\nDrawPilePos = {-5.00, 2.5, -6.50}\r\nDiscardPilePos = {-2.00, 2.5, -6.50}\r\nCards = nil\r\nPlayers = {\r\n    White = {\r\n        FirstPlayer = {-0.60, 1, -16.50},\r\n        SpecialR = { 0.00, 180.00, 0.00 },\r\n        TableauX = { 6.15, 9.15, 12.15, 15.15, 18.15 },\r\n        TableauZ = { -2.38, -6.49, -10.57 }\r\n    },\r\n    Pink = {\r\n        FirstPlayer = {-31.71, 1, -16.50},\r\n        SpecialR = { 0.00, 180.00, 0.00 },\r\n        TableauX = {-25.07, -22.07, -19.07, -16.07, -13.07 },\r\n        TableauZ = {-2.38, -6.49, -10.57 }\r\n    },\r\n    Orange = {\r\n        FirstPlayer = {-6.86, 1, 16.99},\r\n        SpecialR = { 0.00, 0.00, 0.00 },\r\n        TableauX = { -13.07, -16.07, -19.07, -22.07, -25.07 },\r\n        TableauZ = { 3.30, 7.42, 11.52 }\r\n    },\r\n    Yellow = {\r\n        FirstPlayer = {24.45, 1, 16.99},\r\n        SpecialR = { 0.00, 0.00, 0.00 },\r\n        TableauX = { 18.15, 15.15, 12.15, 9.15, 6.15 },\r\n        TableauZ = { 3.30, 7.42, 11.52 }\r\n    }\r\n}\r\n\r\nDrawDeckZone = nil\r\nDiceBag = nil\r\nUtility = nil\r\nEnchantmentScript = nil\r\nDiceRollerScript = nil\r\nSpecialAbilityScript = nil\r\nDraftScript = nil\r\nDataScript = nil\r\nAdvanceTimeScript = nil\r\nScorePadScript = nil\r\n\r\nfunction onLoad(saveState)\r\n    AdvanceTimeScript = getObjectFromGUID('9439cf')\r\n    DrawDeckZone = getObjectFromGUID('00a61b')\r\n    DiceBag = getObjectsWithAllTags({'unused'})[1]\r\n    DataScript = getObjectFromGUID('97996f')\r\n    Utility = getObjectFromGUID('47fd87')\r\n    EnchantmentScript = getObjectFromGUID('8bb3b2')\r\n    DiceRollerScript = getObjectFromGUID('17754c')\r\n    SpecialAbilityScript = getObjectFromGUID('a3ee11')\r\n    DraftScript = getObjectFromGUID('0f55a3')\r\n    Cards = DataScript.getTable('Cards')\r\n    ScorePadScript = getObjectFromGUID('7f10ce')\r\n\r\n    local loadedData = JSON.decode(saveState)\r\n    if loadedData ~= nil then\r\n        settings = loadedData\r\n    end\r\n\r\n    math.randomseed(os.time())\r\n    -- Set items uninteractable\r\n    for key, object in ipairs(getObjectsWithTag('noninteractable')) do\r\n        object.interactable = false\r\n    end\r\n\r\n    if settings.setupComplete == false then\r\n        setupMenu('true')\r\n        yellowPrint('Hidden zone opacity can be changed in Menu -> Configuration -> Interface -> Misc. Settings -> Hidden Zone Hide Opacity.')\r\n        print('Players may choose a specific Enchantment card and place it in the Enchantment card slot. If not, an Enchantment card will be randomly selected.')\r\n    else\r\n        gatherItemsMenu('true')\r\n    end\r\nend\r\n\r\nfunction onSave()\r\n    return JSON.encode(settings)\r\nend\r\n\r\nfunction onPlayerTurn(player, previous_player)\r\n    if settings.setupComplete == false then return end\r\n    if settings.playerTurn == player.color and settings.changingTurns == false then\r\n        local next = Turns.getNextTurnColor()\r\n        settings.changingTurns = true\r\n        settings.playerTurn = next\r\n        Turns.turn_color = next\r\n        moveFirstPlayerToken()\r\n        AdvanceTimeScript.call('advanceTime')\r\n        print('First player moves to the next player.')\r\n    else\r\n        settings.changingTurns = false\r\n    end\r\nend\r\n\r\nfunction setupMenu(value)\r\n    UI.setAttribute('optionsMenu1', 'active', value)\r\n    UI.setAttribute('optionsMenu2', 'active', value)\r\n    UI.setAttribute('optionsMenu3', 'active', value)\r\nend\r\n\r\nfunction startingPlayerMenu(value)\r\n    UI.setAttribute('startPlayerMenu', 'active', value)\r\n    UI.setAttribute('startPlayerMenuButtons', 'active', value)\r\nend\r\n\r\nfunction gatherItemsMenu(value)\r\n    UI.setAttribute('gatherItemsMenu', 'active', 'true')\r\nend\r\n\r\nfunction scorePadMenu(value)\r\n    ScorePadScript.call('setAllTotals')\r\n    UI.setAttribute('ScorepadMenu', 'active', 'true')\r\nend\r\n\r\nfunction uiToggle(player, value, id)\r\n    if id == 'beginner' or id == 'intermediate' or id == 'advanced' then\r\n        if value == 'True' then\r\n            settings.difficulty = id\r\n        end\r\n    else\r\n        if value == 'True' then\r\n            settings[id] = true\r\n        else\r\n            settings[id] = false\r\n        end\r\n    end\r\nend\r\n\r\nfunction setup()\r\n    setupMenu('false')\r\n\r\n    if settings.enchantmentCards == true then\r\n        EnchantmentScript.call('dealEnchantmentCard')\r\n    else\r\n        EnchantmentScript.call('removeEnchantment')\r\n    end\r\n    if settings.enchantmentCard == 'Vision of Destiny' then\r\n        DrawPilePos[1] = DrawPilePos[1] - 3\r\n        DiscardPilePos[1] = DiscardPilePos[1] - 3\r\n        local drawDeckPos = DrawDeckZone.getPosition()\r\n        DrawDeckZone.setPosition({drawDeckPos[1] - 3, drawDeckPos[2], drawDeckPos[3]})\r\n        yellowPrint('Vision of Destiny Enchantment')\r\n        yellowPrint('The top two Power cards in the draw pile are systematically revealed and placed in a row next to the draw. The card farthest from the draw is considered to be the top card in the draw, and the other face-up card is deemed the second card in the draw.')\r\n    end\r\n\r\n    local baseDeck = getObjectsWithAllTags({'Deck', 'base'})[1]\r\n\r\n    if settings.difficulty == 'intermediate' or settings.difficulty == 'beginner' then\r\n        for index, card in ipairs(baseDeck.getObjects()) do\r\n            local info = Cards[card.name]\r\n            if info.Number < 31 then\r\n                Wait.frames(function()\r\n                    baseDeck.takeObject({\r\n                        guid = card.guid,\r\n                        position = DrawPilePos\r\n                    })\r\n                end, index*3)\r\n            end\r\n        end\r\n    end\r\n    local waitTime = 3\r\n    if settings.difficulty == 'advanced' then\r\n        baseDeck.setPositionSmooth(DrawPilePos)\r\n        waitTime = 1.3\r\n    end\r\n\r\n    Wait.time(function()\r\n        local deck = getDrawDeck()\r\n        if settings.pathOfDestiny == true then\r\n            deck.putObject(getObjectsWithAllTags({'Deck', 'path of destiny'})[1])\r\n        end\r\n        if settings.enchantedKingdom == true then\r\n            deck.putObject(getObjectsWithAllTags({'Deck', 'enchanted kingdom'})[1])\r\n        end\r\n        if settings.promos == true then\r\n            deck.putObject(getObjectsWithAllTags({'promo'})[1])\r\n        end\r\n        Wait.time(function()\r\n            deck.shuffle()\r\n\r\n            if settings.enchantmentCard == 'Vision of Destiny' then\r\n                visionOfDestinyShift()\r\n            end\r\n\r\n            getObjectFromGUID('7982cf').setValue('Prelude')\r\n            yellowPrint('The Prelude phase has begun.')\r\n            if settings.specialAbilityTokens == true then\r\n                SpecialAbilityScript.call('dealSpecialAbilityTokens')\r\n            end\r\n            DraftScript.call('dealStartingHand')\r\n        end, 1.7)\r\n    end, waitTime)\r\nend\r\n\r\nfunction visionOfDestinyShift()\r\n    local deck = getDrawDeck()\r\n\r\n    local topCardText = getObjectFromGUID('0f525b')\r\n    local topCardTextPos = topCardText.getPosition()\r\n    topCardText.setPositionSmooth({topCardTextPos[1], 1, topCardTextPos[3]})\r\n\r\n    local secondDrawText = getObjectFromGUID('1117ad')\r\n    local secondDrawTextPos = secondDrawText.getPosition()\r\n    secondDrawText.setPositionSmooth({secondDrawTextPos[1], 1, secondDrawTextPos[3]})\r\n\r\n    local drawText = getObjectFromGUID('a7ee19')\r\n    local drawTextPos = drawText.getPosition()\r\n    drawText.setPositionSmooth({drawTextPos[1]-3, drawTextPos[2], drawTextPos[3]})\r\n\r\n    local discardText = getObjectFromGUID('adfe86')\r\n    local discardTextPos = discardText.getPosition()\r\n    discardText.setPositionSmooth({discardTextPos[1]+3, discardTextPos[2], discardTextPos[3]})\r\n\r\n    deck.takeObject({\r\n        flip = true,\r\n        position = DiscardPilePos\r\n    })\r\n    deck.takeObject({\r\n        flip = true,\r\n        position = {DiscardPilePos[1]+3, DiscardPilePos[2], DiscardPilePos[3]}\r\n    })\r\n    resetTableGrid()\r\nend\r\n\r\nfunction setLibraryCards()\r\n    getDrawDeck().setName('Draw Deck')\r\n    local deckSize = 3\r\n    if settings.enchantmentCard == 'Extended Experience' then\r\n        deckSize = 4\r\n    end\r\n    print('Players must put ' .. deckSize .. ' cards under library II and ' .. deckSize .. ' cards under library III.')\r\n    if settings.specialAbilityTokens == true then\r\n        printToAll('Players must select their special ability token if they have not yet.', stringColorToRGB('Pink'))\r\n    end\r\n\r\n    startingPlayerMenu('true')\r\nend\r\n\r\nfunction startTournament()\r\n    settings.changingTurns = true\r\n    Turns.turn_color = settings.playerTurn\r\n\r\n    removeTwistOfFate()\r\n    DataScript.call('setCardEffects')\r\n\r\n    getObjectFromGUID('7982cf').setValue('Tournament')\r\n    startingPlayerMenu('false')\r\n    gatherItemsMenu('true')\r\n\r\n    local playerCount = #Player.getPlayers()\r\n    local diceRemovalCount = 4 - playerCount\r\n    local elements = {'air', 'earth', 'fire', 'water'}\r\n\r\n    for index, element in ipairs(elements) do\r\n        for x=1, diceRemovalCount do\r\n            Wait.time(function()\r\n                removeRandomDie(element)\r\n            end, (x - 1) * 1.5)\r\n        end\r\n    end\r\n\r\n    -- sort dice\r\n    Wait.time(function()\r\n        DiceRollerScript.call('returnDice', {'water', 'earth', 'fire', 'air'})\r\n    end, (diceRemovalCount - 1) * 2)\r\n\r\n    settings.setupComplete = true\r\n    yellowPrint('The Tournament has begun.')\r\n    moveFirstPlayerToken()\r\nend\r\n\r\nfunction removeTwistOfFate()\r\n -- Remove Twist of Fate on game start\r\n    local deck = getDrawDeck();\r\n    for _, card in ipairs(getDrawDeck().getObjects()) do\r\n        if card.name == 'Twist of Fate' then\r\n            DiceBag.putObject(\r\n                deck.takeObject({guid = card.guid})\r\n            )\r\n        end\r\n    end\r\nend\r\n\r\nfunction removeRandomDie(element)\r\n    local dice = getObjectsWithAllTags({'Die', element})\r\n    local random = Utility.call('rand', #dice)\r\n    DiceBag.putObject(dice[random])\r\nend\r\n\r\nfunction moveFirstPlayerToken()\r\n    local token = getObjectsWithAllTags({'first player token'})[1]\r\n    token.setPositionSmooth(Players[settings.playerTurn].FirstPlayer)\r\n    token.setRotationSmooth(Players[settings.playerTurn].SpecialR)\r\nend\r\n\r\nfunction startingPlayerSelected(player, value, id)\r\n    local colorOrder = {\r\n        White = 'Pink',\r\n        Pink = 'Orange',\r\n        Orange = 'Yellow',\r\n        Yellow = 'White'\r\n    }\r\n    local nonSeated = Utility.call('getNonSeatedPlayerColors')\r\n    for x=1,3 do\r\n        if has_value(nonSeated, value) == true then\r\n            value = colorOrder[value]\r\n        end\r\n    end\r\n    settings.playerTurn = value\r\nend\r\n\r\nfunction getDrawDeck()\r\n    return Utility.call('getDeckFromZone', DrawDeckZone)\r\nend\r\n\r\nfunction yellowPrint(message)\r\n    printToAll(message, stringColorToRGB('Yellow'))\r\nend\r\n\r\nTokenBags = {\r\n    air = 'a0c85d',\r\n    fire = 'ecfadc',\r\n    water = 'd2a187',\r\n    earth = 'f61095',\r\n}\r\nTokenBags['decrease energy'] = '9a6508'\r\n\r\nfunction spawnitem(player, b, id)\r\n    if id == 'air' or id == 'earth' or id == 'water' or id == 'fire' then\r\n        spawnElement(player, id)\r\n    elseif id == 'crystal' then\r\n        changeCrystals('positive', player)\r\n    elseif id == 'summongauge' then\r\n        moveSummonGauge('positive', player)\r\n    end\r\nend\r\n\r\nfunction despawnitem(player, b, id)\r\n    if id == 'air' or id == 'earth' or id == 'water' or id == 'fire' then\r\n        despawnElement(player, id)\r\n    elseif id == 'crystal' then\r\n        changeCrystals('negative', player)\r\n    elseif id == 'summongauge' then\r\n        moveSummonGauge('negative', player)\r\n    end\r\nend\r\n\r\nfunction changeCrystals(direction, player)\r\n    local crystals = getObjectsWithAllTags({player.color, 'crystals'})[1]\r\n    local value = crystals.getValue()\r\n    local increment = 1\r\n    if direction == 'negative' then increment = -1 end\r\n    local newValue = value + increment\r\n    if newValue < 0 then\r\n        yellowPrint('Crystal count can not go below 0.')\r\n        return\r\n    end\r\n    local incdec = 'gained'\r\n    if direction == 'negative' then incdec = 'removed' end\r\n    local message = player.color .. \" player has \" .. incdec .. \" 1 crystal with a total of \" .. newValue .. \" crystals.\"\r\n    printToAll(message, stringColorToRGB(player.color))\r\n\r\n    crystals.setValue(newValue)\r\nend\r\n\r\nfunction moveSummonGauge(direction, player)\r\n    function sortBlockX(a,b)\r\n        if player.color == 'Orange' or player.color == 'Yellow' then\r\n            return a[1] > b[1]\r\n        end\r\n        return a[1] < b[1]\r\n    end\r\n    function roundPosition(position)\r\n        return {\r\n            round(position[1], 2),\r\n            round(position[2]+.3, 2),\r\n            round(position[3], 2)\r\n        }\r\n    end\r\n\r\n    local board = getObjectsWithAllTags({player.color, 'player board'})[1]\r\n    local block = getObjectsWithAllTags({player.color, 'summon gauge'})[1]\r\n    local blockPosition = roundPosition(block.getPosition())\r\n    local gaugeIndex = 0\r\n    local points = {}\r\n    for _, point in ipairs(board.getSnapPoints()) do\r\n        if has_value(point.tags, 'summon gauge') then\r\n            local position = board.positionToWorld(point.position)\r\n            local roundedPosition = roundPosition(position)\r\n            table.insert(points, roundedPosition)\r\n        end\r\n    end\r\n    table.sort(points, sortBlockX)\r\n\r\n    for index, point in ipairs(points) do\r\n        if (point[1] == blockPosition[1]) then\r\n            gaugeIndex = index\r\n        end\r\n    end\r\n\r\n    if gaugeIndex == 0 then return end\r\n    if direction == 'positive' then\r\n        if gaugeIndex > 15 then\r\n            yellowPrint('You increase your summoning gauge past 15.')\r\n            return;\r\n        end\r\n        printToAll(player.color .. \" player increased their summoning gauge to \" .. gaugeIndex .. '.', stringColorToRGB(player.color))\r\n        block.setPositionSmooth(points[gaugeIndex + 1], false, true)\r\n    elseif direction == 'negative' then\r\n        if gaugeIndex <= 1 then\r\n            yellowPrint('You cannot reduce your summoning gauge below 0.')\r\n            return;\r\n        end\r\n        printToAll(player.color .. \" player decreerased their summoning gauge to \" .. gaugeIndex -2 .. '.', stringColorToRGB(player.color))\r\n        block.setPositionSmooth(points[gaugeIndex - 1], false, true)\r\n    end\r\nend\r\n\r\nfunction spawnElement(player, element)\r\n    local remainingSpace = getRemainingTokenSpace(player.color)\r\n    if remainingSpace == 0 then\r\n        yellowPrint(player.color .. ' has no space left for energy.')\r\n        return\r\n    end\r\n\r\n    moveTokensLeft(player.color)\r\n\r\n    local totalSlots = getTokenSlotCount(player.color)\r\n    local snapPositionIndex = totalSlots - remainingSpace + 1\r\n\r\n    local positions = getPointPositions(player.color)\r\n\r\n    local bag = getObjectFromGUID(TokenBags[element])\r\n    bag.takeObject({\r\n        position = positions[snapPositionIndex],\r\n        rotation = Players[player.color].SpecialR,\r\n        smooth = false\r\n    })\r\n    printToAll(player.color .. ' player gained ' .. element .. ' energy.', stringColorToRGB(player.color))\r\nend\r\n\r\nfunction despawnElement(player, element)\r\n    for _, token in ipairs(getTokens(player.color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag == element then\r\n            destroyObject(token)\r\n            printToAll(player.color .. ' player spent ' .. element .. ' energy.', stringColorToRGB(player.color))\r\n            Wait.frames(function()\r\n                moveTokensLeft(player.color)\r\n            end, 10)\r\n            return\r\n        end\r\n    end\r\n    yellowPrint(player.color .. ' has no ' .. element .. ' energy to spend.')\r\nend\r\n\r\nfunction resetTableGrid()\r\n    getObjectFromGUID('4ee1f2').call('onLoad')\r\nend\r\n\r\nfunction has_value(tab, val)\r\n    for index, value in ipairs(tab) do\r\n        if value == val then\r\n            return true\r\n        end\r\n    end\r\n    return false\r\nend\r\n\r\nTokenZones = {\r\n    White = '2b8d13',\r\n    Pink = 'b5eb64',\r\n    Orange = '879ee3',\r\n    Yellow = '4b2d0e'\r\n}\r\nfunction getPointPositions(color)\r\n    local points = {}\r\n    for _, point in ipairs(Global.getSnapPoints()) do\r\n        if has_value(point.tags, color) == true then\r\n            table.insert(points, point.position)\r\n        end\r\n    end\r\n\r\n    local grimoire = nil\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag == 'grimoire' then grimoire = token end\r\n    end\r\n\r\n    if grimoire ~= nil then\r\n        for _, point in ipairs(grimoire.getSnapPoints()) do\r\n            table.insert(points, grimoire.positionToWorld(point.position))\r\n        end\r\n    end\r\n\r\n    return points\r\nend\r\n\r\nfunction getTokens(color)\r\n    local zone = getObjectFromGUID(TokenZones[color])\r\n    return zone.getObjects()\r\nend\r\n\r\nfunction getTokenCount(color)\r\n    local count = {\r\n        air = 0,\r\n        fire = 0,\r\n        water = 0,\r\n        earth = 0,\r\n        grimoire = 0\r\n    }\r\n    count['decrease energy'] = 0\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if token.type ~= 'Dice' then\r\n            count[tag] = count[tag] + 1\r\n        end\r\n    end\r\n    return count\r\nend\r\n\r\nfunction getRemainingTokenSpace(color)\r\n    local count = getTokenCount(color)\r\n    local total = count.air + count.fire + count.water + count.earth + count['decrease energy']\r\n    local max = 7\r\n    if count.grimoire > 0 then max = 10 end\r\n    return max - total\r\nend\r\n\r\nfunction hasGrimoire(color)\r\n    return getTokenCount(color).grimoire > 0\r\nend\r\n\r\nfunction getTokenSlotCount(color)\r\n    local count = 7\r\n    if hasGrimoire(color) == true then\r\n        count = 10\r\n    end\r\n    return count\r\nend\r\n\r\nfunction moveTokensLeft(color)\r\n    local slot = 1\r\n    local positions = getPointPositions(color)\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag ~= 'grimoire' and token.type ~= 'Dice' then\r\n            token.setPositionSmooth(positions[slot])\r\n            slot = slot + 1\r\n        end\r\n    end\r\nend\r\n\r\nfunction round(number, places)\r\n    local mult = 10^(places or 0)\r\n    return math.floor(number * mult + 0.5) / mult\r\nend\r\n\r\nfunction scoreChange(player, value, id)\r\n    ScorePadScript.call('scoreChange', { id = id, value = value })\r\nend",
   "LuaScriptState": "{\"changingTurns\":false,\"difficulty\":\"advanced\",\"enchantedKingdom\":true,\"enchantmentCard\":\"\",\"enchantmentCards\":true,\"pathOfDestiny\":true,\"playerTurn\":\"White\",\"promos\":true,\"setupComplete\":false,\"specialAbility\":{\"Orange\":\"\",\"Pink\":\"\",\"White\":\"\",\"Yellow\":\"\"},\"specialAbilityTokens\":true}",
   "XmlUI": "<Defaults>\r\n    <Panel\r\n            class=\"score\"\r\n            height=\"50\"\r\n            width=\"50\"\r\n            rectAlignment=\"UpperLeft\" />\r\n    <Panel\r\n            class=\"itemannouncePanel\"\r\n            active=\"false\"\r\n            rectAlignment=\"LowerRight\"\r\n            showAnimation=\"FadeIn\"\r\n            hideAnimation=\"FadeOut\"\r\n            animationDuration=\"0.6\"\r\n            hideAnimationDelay=\"0.5\"\r\n            height=\"100\"\r\n            width=\"300\" />\r\n    <Text\r\n            class=\"itemannounceText\"\r\n            fontSize=\"25\"\r\n            color=\"#FFFFFF\"\r\n            fontstyle=\"Bold\"\r\n            outline=\"#000000\"\r\n            alignment=\"LowerRight\"\r\n            outlinesize=\"1 -1\" />\r\n    <text\r\n            class=\"plusminus\"\r\n            fontSize=\"30\"\r\n            fontStyle=\"Bold\"\r\n            color=\"#000000\"></text>\r\n    <Button\r\n            class=\"spawnbutton\"\r\n            onClick=\"spawnitem()\"\r\n            height=\"50\"\r\n            width=\"50\"\r\n            color=\"rgba(0,0,0,0)\"\r\n            rectAlignment=\"UpperLeft\"></Button>\r\n    <Button\r\n            class=\"despawnbutton\"\r\n            onClick=\"despawnitem()\"\r\n            height=\"50\"\r\n            width=\"50\"\r\n            color=\"rgba(0,0,0,0)\"\r\n            rectAlignment=\"UpperLeft\"\r\n            id=\"spawnwater\"></Button>\r\n    <Cell\r\n            class=\"whiteBackground\"\r\n            color=\"White\"\r\n            dontUseTableCellBackground=\"true\"></Cell>\r\n    <Cell\r\n            class=\"pinkBackground\"\r\n            color=\"Pink\"\r\n            dontUseTableCellBackground=\"true\">\r\n    </Cell>\r\n    <Cell\r\n            class=\"orangeBackground\"\r\n            color=\"Orange\"\r\n            dontUseTableCellBackground=\"true\">\r\n    </Cell>\r\n    <Cell\r\n            class=\"yellowBackground\"\r\n            color=\"Yellow\"\r\n            dontUseTableCellBackground=\"true\">\r\n    </Cell>\r\n</Defaults>\r\n\r\n<TableLayout\r\n        id=\"optionsMenu1\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 430\"\r\n        height=\"40\"\r\n        width=\"340\"\r\n        rowBackgroundColor=\"rgba(0, 0.39, 0.65)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell>\r\n            <Text\r\n                    color=\"white\"\r\n                    fontSize=\"16\">Game Options</Text>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"optionsMenu2\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 40\"\r\n        height=\"390\"\r\n        width=\"340\"\r\n        cellPadding=\"24 0 12 12\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"140\">\r\n        <Cell>\r\n            <ToggleGroup>\r\n                <VerticalLayout>\r\n                    <Text\r\n                            fontStyle=\"Bold\"\r\n                            alignment=\"MiddleLeft\">Difficulty Options</Text>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"beginner\">Apprentice Wizard level (beginner level)</Toggle>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"intermediate\">Magician level (intermediate level)</Toggle>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"advanced\"\r\n                            isOn=\"True\">Archmage level (advanced level)</Toggle>\r\n                </VerticalLayout>\r\n            </ToggleGroup>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"140\">\r\n        <Cell>\r\n            <VerticalLayout>\r\n                <Text\r\n                        fontStyle=\"Bold\"\r\n                        alignment=\"MiddleLeft\">Expansions</Text>\r\n                <VerticalLayout>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"enchantedKingdom\">Enchanted Kingdom</Toggle>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"pathOfDestiny\">Path of Destiny</Toggle>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"promos\">Promos</Toggle>\r\n                </VerticalLayout>\r\n            </VerticalLayout>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"100\">\r\n        <Cell>\r\n            <VerticalLayout>\r\n                <Text\r\n                        fontStyle=\"Bold\"\r\n                        alignment=\"MiddleLeft\">Expansion Components</Text>\r\n                <VerticalLayout>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"enchantmentCards\">Enchantment Cards</Toggle>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"specialAbilityTokens\">Special Ability Tokens</Toggle>\r\n                </VerticalLayout>\r\n            </VerticalLayout>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"10\">\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"optionsMenu3\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        height=\"40\"\r\n        width=\"340\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell>\r\n            <Button\r\n                    onClick=\"setup()\"\r\n                    color=\"Green\"\r\n                    textColor=\"white\"\r\n                    fontSize=\"16\">Setup</Button>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n\r\n<TableLayout\r\n        id=\"startPlayerMenu\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 80\"\r\n        height=\"152\"\r\n        width=\"290\"\r\n        cellPadding=\"15 15 15 15\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"115\">\r\n        <Cell>\r\n            <Text alignment=\"UpperLeft\">Everyone must finish selecting their Library II and Library III cards.\r\n\r\n                Then, select the youngest player as the starting player and click Start Tournament.</Text>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"77\">\r\n        <Cell>\r\n            <Dropdown\r\n                    id=\"StartingPlayer\"\r\n                    onValueChanged=\"startingPlayerSelected\">\r\n                <Option>White</Option>\r\n                <Option>Pink</Option>\r\n                <Option>Orange</Option>\r\n                <Option>Yellow</Option>\r\n            </Dropdown>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"startPlayerMenuButtons\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        height=\"40\"\r\n        width=\"290\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell columnSpan=\"3\">\r\n            <Button\r\n                    onClick=\"startTournament()\"\r\n                    color=\"Green\"\r\n                    textColor=\"white\"\r\n                    fontSize=\"16\">Start Tournament</Button>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n\r\n\r\n<!-- GatherItemsMenu -->\r\n<Panel\r\n        offsetXY=\"-75 10\"\r\n        id=\"gatherItemsMenu\"\r\n        height=\"305\"\r\n        width=\"100\"\r\n        rectAlignment=\"Lowerright\"\r\n        allowDragging=\"true\"\r\n        returnToOriginalPositionWhenReleased=\"false\"\r\n        active=\"false\">\r\n\r\n    <!-- Water  -->\r\n    <Panel class=\"score\">\r\n        <image\r\n                image=\"water\"\r\n                height=\"50\"\r\n                width=\"50\"\r\n                preserveAspect=\"true\">\r\n            <Button\r\n                    class=\"despawnbutton\"\r\n                    id=\"water\"></Button>\r\n            <text class=\"plusminus\">-</text>\r\n        </image>\r\n    </Panel>\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"52 0\">\r\n        <image\r\n                image=\"water\"\r\n                height=\"50\"\r\n                width=\"50\"\r\n                preserveAspect=\"true\">\r\n            <Button\r\n                    class=\"spawnbutton\"\r\n                    id=\"water\"></Button>\r\n            <text class=\"plusminus\">+</text>\r\n        </image>\r\n    </Panel>\r\n\r\n    <!-- Earth  -->\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"0 -52\">\r\n        <image\r\n                image=\"earth\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button\r\n                    class=\"despawnbutton\"\r\n                    id=\"earth\"></Button>\r\n            <text class=\"plusminus\">-</text>\r\n        </image>\r\n    </Panel>\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"52 -52\">\r\n        <image\r\n                image=\"earth\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button\r\n                    class=\"spawnbutton\"\r\n                    id=\"earth\"></Button>\r\n            <text class=\"plusminus\">+</text>\r\n        </image>\r\n    </Panel>\r\n\r\n    <!-- Fire -->\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"0 -104\">\r\n        <image\r\n                image=\"fire\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n\r\n            <Button\r\n                    class=\"despawnbutton\"\r\n                    id=\"fire\"></Button>\r\n            <text class=\"plusminus\">-</text>\r\n        </image>\r\n    </Panel>\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"52 -104\">\r\n        <image\r\n                image=\"fire\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button\r\n                    class=\"spawnbutton\"\r\n                    id=\"fire\"></Button>\r\n            <text class=\"plusminus\">+</text>\r\n        </image>\r\n    </Panel>\r\n\r\n    <!-- Air -->\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"0 -156\">\r\n        <image\r\n                image=\"air\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button\r\n                    class=\"despawnbutton\"\r\n                    id=\"air\"></Button>\r\n            <text class=\"plusminus\">-</text>\r\n        </image>\r\n    </Panel>\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"52 -156\">\r\n        <image\r\n                image=\"air\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button\r\n                    class=\"spawnbutton\"\r\n                    id=\"air\"></Button>\r\n            <text class=\"plusminus\">+</text>\r\n        </image>\r\n    </Panel>\r\n\r\n    <!-- Crystal -->\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"0 -208\">\r\n        <image\r\n                image=\"crystal\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button\r\n                    class=\"despawnbutton\"\r\n                    id=\"crystal\"></Button>\r\n            <text class=\"plusminus\">-</text>\r\n        </image>\r\n    </Panel>\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"52 -208\">\r\n        <image\r\n                image=\"crystal\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button\r\n                    class=\"spawnbutton\"\r\n                    id=\"crystal\"></Button>\r\n            <text class=\"plusminus\">+</text>\r\n        </image>\r\n    </Panel>\r\n\r\n    <!-- Crystal -->\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"0 -260\">\r\n        <image\r\n                image=\"summongauge\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button\r\n                    class=\"despawnbutton\"\r\n                    id=\"summongauge\"></Button>\r\n            <text class=\"plusminus\">-</text>\r\n        </image>\r\n    </Panel>\r\n    <Panel\r\n            class=\"score\"\r\n            offsetXY=\"52 -260\">\r\n        <image\r\n                image=\"summongauge\"\r\n                height=\"50\"\r\n                width=\"50\">\r\n            <Button\r\n                    class=\"spawnbutton\"\r\n                    id=\"summongauge\"></Button>\r\n            <text class=\"plusminus\">+</text>\r\n        </image>\r\n    </Panel>\r\n\r\n</Panel>\r\n\r\n<!-- Scorepad Big -->\r\n<Panel\r\n        id=\"ScorepadMenu\"\r\n        height=\"360\"\r\n        width=\"525\"\r\n        rectAlignment=\"Center\"\r\n        allowDragging=\"true\"\r\n        returnToOriginalPositionWhenReleased=\"false\"\r\n        outline=\"#000000\"\r\n        padding=\"2,2,2,2\"\r\n        outlineSize=\"1 -1\"\r\n        color=\"rgb(0.95,0.95,0.95)\"\r\n        active=\"false\">\r\n    <TableLayout\r\n            cellPadding=\"5,5,5,5\"\r\n            cellSpacing=\"2\"\r\n            columnWidths=\"225, 75, 75, 75, 75\"\r\n            cellBackgroundColor=\"rgba(1,1,1,0.8)\">\r\n        <Row>\r\n            <Cell\r\n                    columnSpan=\"5\"\r\n                    color=\"rgb(0, 0.39, 0.65)\"\r\n                    dontUseTableCellBackground=\"true\">\r\n                <Text\r\n                        fontStyle=\"bold\"\r\n                        color=\"White\"\r\n                        fontSize=\"18\">Score Pad</Text>\r\n            </Cell>\r\n        </Row>\r\n        <Row>\r\n            <Cell dontUseTableCellBackground=\"true\"></Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <Text>White</Text>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <Text>Pink</Text>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <Text>Orange</Text>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <Text>Yellow</Text>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Card Prestige</b>: Gain prestige value of every card in your tableau.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"prestige-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"prestige-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"prestige-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"prestige-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>End of Game</b>: Gain/Lose Prestige for any end of game effects.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"endofgame-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"endofgame-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"endofgame-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"endofgame-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Crystals</b>: Gain prestige for all remaining crystals.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"crystals-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"crystals-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"crystals-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"crystals-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Unplayed Cards</b>: Lose 5 Prestige for every card left in your hand.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"unplayed-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"unplayed-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"unplayed-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"unplayed-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Bonus Track</b>: Lose Prestige for your bonus track use.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"bonus-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"bonus-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"bonus-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"bonus-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell alignment=\"UpperLeft\">\r\n                <Text fontStyle=\"bold\">Total</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"total-White\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"total-Pink\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"total-Orange\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"total-Yellow\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n    </TableLayout>\r\n</Panel>",
   "CustomUIAssets": [
@@ -618,7 +618,7 @@
       "Rotation": {
         "x": 1.11426509E-07,
         "y": 180.021729,
-        "z": -4.59496867E-08
+        "z": -4.59496938E-08
       }
     },
     {
@@ -962,9 +962,9 @@
         "z": -15.9098186
       },
       "Rotation": {
-        "x": 2.82154542E-05,
+        "x": 2.821546E-05,
         "y": 180.021484,
-        "z": -0.000183528609
+        "z": -0.000183528638
       }
     },
     {
@@ -1016,7 +1016,7 @@
       "Rotation": {
         "x": -0.000176037371,
         "y": 179.963638,
-        "z": -0.000232180813
+        "z": -0.000232180755
       },
       "Tags": [
         "water",
@@ -1094,7 +1094,7 @@
         "z": -14.4003315
       },
       "Rotation": {
-        "x": -1.52414361E-06,
+        "x": -1.52414384E-06,
         "y": 179.9696,
         "z": -2.14577062E-06
       },
@@ -1201,7 +1201,7 @@
         "z": -6.640216
       },
       "Rotation": {
-        "x": -1.18257617E-07,
+        "x": -1.18257645E-07,
         "y": 180.021912,
         "z": -1.40597521E-07
       }
@@ -2644,7 +2644,7 @@
         "z": -6.496402
       },
       "Rotation": {
-        "x": -2.30046258E-08,
+        "x": -2.300463E-08,
         "y": 180.0223,
         "z": -1.10506214E-07
       }
@@ -2656,9 +2656,9 @@
         "z": -6.496402
       },
       "Rotation": {
-        "x": -6.06545836E-09,
+        "x": -6.065459E-09,
         "y": 180.0223,
-        "z": -9.825478E-08
+        "z": -9.82547945E-08
       }
     },
     {
@@ -2670,7 +2670,7 @@
       "Rotation": {
         "x": 3.49847475E-08,
         "y": 180.0223,
-        "z": -5.80848045E-08
+        "z": -5.80848152E-08
       }
     },
     {
@@ -5428,11 +5428,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": 21.2872658,
-        "posY": 0.924506366,
+        "posY": 0.9245064,
         "posZ": -12.5990629,
-        "rotX": 5.53062137E-06,
+        "rotX": 8.183805E-07,
         "rotY": 180.000381,
-        "rotZ": -8.076105E-06,
+        "rotZ": -5.47475065E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -5446,9 +5446,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.17837587,
-        "g": 0.185075074,
-        "b": 0.2386682
+        "r": 0.17837581,
+        "g": 0.185075015,
+        "b": 0.238668144
       },
       "Tags": [
         "ii",
@@ -5501,9 +5501,9 @@
         "posX": 24.4938641,
         "posY": 0.924506545,
         "posZ": -12.5937443,
-        "rotX": 1.72027444E-06,
+        "rotX": 1.73259014E-06,
         "rotY": 180.000061,
-        "rotZ": -1.96117617E-06,
+        "rotZ": -1.958117E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -5517,9 +5517,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.17837587,
-        "g": 0.185075074,
-        "b": 0.2386682
+        "r": 0.17837581,
+        "g": 0.185075015,
+        "b": 0.238668144
       },
       "Tags": [
         "iii",
@@ -5655,7 +5655,7 @@
           "Rotation": {
             "x": 0.000183885582,
             "y": 179.989426,
-            "z": -0.000185142271
+            "z": -0.0001851423
           }
         },
         {
@@ -5811,9 +5811,9 @@
         "posX": -2.531734,
         "posY": 1.199653,
         "posZ": 4.338665,
-        "rotX": 2.92152777E-07,
+        "rotX": 4.163334E-06,
         "rotY": 16.2010479,
-        "rotZ": -1.481049E-06,
+        "rotZ": -1.897961E-06,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -5827,9 +5827,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.228215188,
-        "g": 0.228215188,
-        "b": 0.228215188
+        "r": 0.228215128,
+        "g": 0.228215128,
+        "b": 0.228215128
       },
       "Tags": [
         "round marker"
@@ -5877,7 +5877,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -5947,7 +5947,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.383100837
+        "b": 0.383100778
       },
       "Tags": [
         "destiny"
@@ -6017,7 +6017,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -6087,7 +6087,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -6155,9 +6155,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.3449441,
-        "g": 0.3449441,
-        "b": 0.3449441,
+        "r": 0.34494403,
+        "g": 0.34494403,
+        "b": 0.34494403,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -6288,9 +6288,9 @@
             "z": -0.217036173
           },
           "Rotation": {
-            "x": 0.000226185017,
+            "x": 0.00022618506,
             "y": 359.973236,
-            "z": -0.000216151078
+            "z": -0.000216151107
           },
           "Tags": [
             "summon gauge"
@@ -6303,7 +6303,7 @@
             "z": -0.3286066
           },
           "Rotation": {
-            "x": 0.00020661419,
+            "x": 0.000206614219,
             "y": 359.97464,
             "z": -0.000190404389
           },
@@ -6320,7 +6320,7 @@
           "Rotation": {
             "x": 0.00020607152,
             "y": 359.9751,
-            "z": -0.000190923252
+            "z": -0.000190923281
           },
           "Tags": [
             "summon gauge"
@@ -6335,7 +6335,7 @@
           "Rotation": {
             "x": 0.000196180059,
             "y": 359.5958,
-            "z": -0.000180919815
+            "z": -0.000180919844
           },
           "Tags": [
             "summon gauge"
@@ -6348,7 +6348,7 @@
             "z": -0.546610236
           },
           "Rotation": {
-            "x": 0.000197548827,
+            "x": 0.000197548856,
             "y": 359.969238,
             "z": -0.000184403834
           },
@@ -6380,7 +6380,7 @@
           "Rotation": {
             "x": 0.000220511822,
             "y": 359.974365,
-            "z": -0.0002174253
+            "z": -0.000217425331
           },
           "Tags": [
             "bonus track"
@@ -6393,9 +6393,9 @@
             "z": -0.216525152
           },
           "Rotation": {
-            "x": 0.000238928435,
+            "x": 0.000238928478,
             "y": 359.975342,
-            "z": -0.00021848554
+            "z": -0.000218485569
           },
           "Tags": [
             "bonus track"
@@ -6408,9 +6408,9 @@
             "z": -0.64711
           },
           "Rotation": {
-            "x": 0.0002181421,
-            "y": 0.0304720029,
-            "z": -0.000225105367
+            "x": 0.00021814213,
+            "y": 0.0304720085,
+            "z": -0.000225105308
           },
           "Tags": [
             "summon gauge"
@@ -6425,7 +6425,7 @@
           "Rotation": {
             "x": 0.000224521733,
             "y": 359.9751,
-            "z": -0.000218212925
+            "z": -0.000218212954
           },
           "Tags": [
             "bonus track"
@@ -6440,7 +6440,7 @@
           "Rotation": {
             "x": 0.00023722506,
             "y": 359.9731,
-            "z": -0.000216026514
+            "z": -0.000216026543
           },
           "Tags": [
             "bonus track"
@@ -6453,9 +6453,9 @@
             "z": -0.6977042
           },
           "Rotation": {
-            "x": 0.00021547846,
+            "x": 0.000215478489,
             "y": 359.97406,
-            "z": -0.00021709103
+            "z": -0.000217091059
           },
           "Tags": [
             "summon gauge"
@@ -6483,7 +6483,7 @@
             "z": -0.726439059
           },
           "Rotation": {
-            "x": 0.000225875134,
+            "x": 0.000225875192,
             "y": 0.01903512,
             "z": -0.000239716188
           },
@@ -6515,7 +6515,7 @@
           "Rotation": {
             "x": 0.000253165839,
             "y": 359.972321,
-            "z": -0.000242468173
+            "z": -0.000242468232
           },
           "Tags": [
             "summon gauge"
@@ -6528,9 +6528,9 @@
             "z": -0.547135532
           },
           "Rotation": {
-            "x": 0.000198804628,
+            "x": 0.000198804657,
             "y": 359.9706,
-            "z": -0.000185918951
+            "z": -0.000185918892
           },
           "Tags": [
             "summon gauge"
@@ -6558,7 +6558,7 @@
             "z": -0.7318672
           },
           "Rotation": {
-            "x": 0.00021854091,
+            "x": 0.000218540968,
             "y": 359.969666,
             "z": -0.000239533168
           },
@@ -7059,9 +7059,9 @@
             "z": -0.302327424
           },
           "Rotation": {
-            "x": 0.000230844918,
+            "x": 0.00023084486,
             "y": 179.962234,
-            "z": -0.000223439114
+            "z": -0.00022343907
           },
           "Tags": [
             "summon gauge"
@@ -7074,7 +7074,7 @@
             "z": -0.374846429
           },
           "Rotation": {
-            "x": 0.000203479372,
+            "x": 0.0002034794,
             "y": 180.02507,
             "z": -0.000183997065
           },
@@ -7119,7 +7119,7 @@
             "z": -0.177266046
           },
           "Rotation": {
-            "x": 0.000236178937,
+            "x": 0.0002361789,
             "y": 179.962234,
             "z": -0.000168798142
           },
@@ -7151,7 +7151,7 @@
           "Rotation": {
             "x": 9.71043555E-05,
             "y": 179.961578,
-            "z": -5.87814829E-05
+            "z": -5.878147E-05
           },
           "Tags": [
             "summon gauge"
@@ -7164,7 +7164,7 @@
             "z": -0.188486382
           },
           "Rotation": {
-            "x": 0.000232332866,
+            "x": 0.000232332823,
             "y": 179.960571,
             "z": -0.000166945872
           },
@@ -7224,7 +7224,7 @@
             "z": -0.153233483
           },
           "Rotation": {
-            "x": 0.00022448755,
+            "x": 0.000224487492,
             "y": 179.9604,
             "z": -0.000166763552
           },
@@ -7241,7 +7241,7 @@
           "Rotation": {
             "x": 9.821721E-05,
             "y": 179.959808,
-            "z": -5.68090254E-05
+            "z": -5.680901E-05
           },
           "Tags": [
             "summon gauge"
@@ -7271,7 +7271,7 @@
           "Rotation": {
             "x": 0.000203584845,
             "y": 179.960846,
-            "z": -0.000221878465
+            "z": -0.000221878421
           },
           "Tags": [
             "summon gauge"
@@ -7299,7 +7299,7 @@
             "z": -0.5594198
           },
           "Rotation": {
-            "x": 0.000236339212,
+            "x": 0.000236339154,
             "y": 179.959961,
             "z": -0.000166281636
           },
@@ -7407,9 +7407,9 @@
             "z": -0.109770417
           },
           "Rotation": {
-            "x": 0.0002013164,
+            "x": 0.000201316434,
             "y": 179.97464,
-            "z": -0.000195235014
+            "z": -0.000195235043
           },
           "Tags": [
             "summon gauge"
@@ -7439,7 +7439,7 @@
           "Rotation": {
             "x": 0.000201818242,
             "y": 179.9744,
-            "z": -0.0001949621
+            "z": -0.000194962122
           },
           "Tags": [
             "summon gauge"
@@ -7452,7 +7452,7 @@
             "z": -0.4006478
           },
           "Rotation": {
-            "x": 0.000204044438,
+            "x": 0.000204044467,
             "y": 179.976822,
             "z": -0.0001976632
           },
@@ -7482,7 +7482,7 @@
             "z": -0.5330553
           },
           "Rotation": {
-            "x": 0.000204151147,
+            "x": 0.000204151176,
             "y": 179.970276,
             "z": -0.000217698558
           },
@@ -7527,7 +7527,7 @@
             "z": -0.6905278
           },
           "Rotation": {
-            "x": 0.0002094732,
+            "x": 0.000209473234,
             "y": 179.974472,
             "z": -0.00022236802
           },
@@ -7557,7 +7557,7 @@
             "z": -0.7128147
           },
           "Rotation": {
-            "x": 0.000231267579,
+            "x": 0.000231267637,
             "y": 179.974564,
             "z": -0.000222459421
           },
@@ -7572,7 +7572,7 @@
             "z": -0.7306092
           },
           "Rotation": {
-            "x": 0.00020889804,
+            "x": 0.000208898069,
             "y": 179.974228,
             "z": -0.000249417761
           },
@@ -7587,7 +7587,7 @@
             "z": -0.718739152
           },
           "Rotation": {
-            "x": 0.000216709552,
+            "x": 0.000216709581,
             "y": 179.974579,
             "z": -0.000249810255
           },
@@ -7602,7 +7602,7 @@
             "z": -0.694881
           },
           "Rotation": {
-            "x": 0.000220072354,
+            "x": 0.000220072412,
             "y": 179.973953,
             "z": -0.000221791081
           },
@@ -7617,7 +7617,7 @@
             "z": -0.6447028
           },
           "Rotation": {
-            "x": 0.000189240731,
+            "x": 0.00018924076,
             "y": 179.976639,
             "z": -0.000279409869
           },
@@ -7647,7 +7647,7 @@
             "z": -0.206751809
           },
           "Rotation": {
-            "x": 0.000200788549,
+            "x": 0.000200788578,
             "y": 179.970383,
             "z": -0.0001904968
           },
@@ -7677,9 +7677,9 @@
             "z": -0.234791979
           },
           "Rotation": {
-            "x": 0.000203446834,
+            "x": 0.000203446863,
             "y": 179.976608,
-            "z": -0.000197413145
+            "z": -0.000197413174
           },
           "Tags": [
             "bonus track"
@@ -7692,9 +7692,9 @@
             "z": -0.195362017
           },
           "Rotation": {
-            "x": 0.000203751726,
+            "x": 0.000203751755,
             "y": 179.9739,
-            "z": -0.0001944098
+            "z": -0.000194409833
           },
           "Tags": [
             "bonus track"
@@ -7709,9 +7709,9 @@
         "posX": -4.21983433,
         "posY": 1.19950664,
         "posZ": 0.621655,
-        "rotX": -1.1578212E-06,
-        "rotY": 0.01924058,
-        "rotZ": -2.21489586E-06,
+        "rotX": -9.22424363E-07,
+        "rotY": 0.0192507561,
+        "rotZ": -2.17722732E-06,
         "scaleX": 0.350000441,
         "scaleY": 0.350000441,
         "scaleZ": 0.350000441
@@ -7725,9 +7725,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.228215158,
-        "g": 0.228215158,
-        "b": 0.228215158
+        "r": 0.2282151,
+        "g": 0.2282151,
+        "b": 0.2282151
       },
       "Tags": [
         "year marker"
@@ -8889,11 +8889,11 @@
       "Name": "Infinite_Bag",
       "Transform": {
         "posX": 30.7106419,
-        "posY": 0.9109065,
+        "posY": 0.910906553,
         "posZ": -13.8427315,
-        "rotX": -9.640731E-09,
-        "rotY": 0.000111491885,
-        "rotZ": -9.54131352E-08,
+        "rotX": -9.848426E-09,
+        "rotY": 0.000111498295,
+        "rotZ": -9.38505238E-08,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -8998,11 +8998,11 @@
       "Name": "Infinite_Bag",
       "Transform": {
         "posX": 32.58614,
-        "posY": 0.910906553,
+        "posY": 0.910906434,
         "posZ": -13.8427315,
-        "rotX": -5.726063E-08,
-        "rotY": 0.000128662214,
-        "rotZ": 6.8928415E-07,
+        "rotX": -6.747522E-08,
+        "rotY": 0.000128733125,
+        "rotZ": -9.053439E-09,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -9109,9 +9109,9 @@
         "posX": 34.4621124,
         "posY": 0.9109064,
         "posZ": -13.8427315,
-        "rotX": 1.10018213E-07,
-        "rotY": 0.000193228028,
-        "rotZ": -2.71591638E-08,
+        "rotX": -3.411327E-09,
+        "rotY": 0.000193228814,
+        "rotZ": 7.741791E-08,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -9218,9 +9218,9 @@
         "posX": 36.3019562,
         "posY": 0.910906434,
         "posZ": -13.8427315,
-        "rotX": -3.707703E-09,
-        "rotY": 0.000151515051,
-        "rotZ": -9.662812E-09,
+        "rotX": -1.09922873E-07,
+        "rotY": 0.000151516986,
+        "rotZ": 3.89887553E-08,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -9327,9 +9327,9 @@
         "posX": 28.8855782,
         "posY": 0.910906434,
         "posZ": -13.8427315,
-        "rotX": -2.73869674E-08,
-        "rotY": 0.000310238684,
-        "rotZ": 4.85647931E-08,
+        "rotX": -1.95913152E-08,
+        "rotY": 0.0003102366,
+        "rotZ": 9.41137444E-08,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -9588,10 +9588,10 @@
       "Transform": {
         "posX": 35.752388,
         "posY": 0.9935775,
-        "posZ": -6.64027643,
-        "rotX": -6.6185204E-09,
+        "posZ": -6.640277,
+        "rotX": 1.43725991E-08,
         "rotY": 180.0223,
-        "rotZ": -1.76350445E-09,
+        "rotZ": -6.967142E-08,
         "scaleX": 1.25,
         "scaleY": 1.0,
         "scaleZ": 1.25
@@ -10271,11 +10271,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": -9.892814,
-        "posY": 0.924506545,
+        "posY": 0.924506843,
         "posZ": -12.6009579,
-        "rotX": 1.0713095E-06,
+        "rotX": 2.571941E-06,
         "rotY": 180.02684,
-        "rotZ": 2.47180947E-06,
+        "rotZ": 2.304295E-08,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -10289,9 +10289,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.17837587,
-        "g": 0.185075074,
-        "b": 0.2386682
+        "r": 0.17837581,
+        "g": 0.185075015,
+        "b": 0.238668144
       },
       "Tags": [
         "ii",
@@ -10342,11 +10342,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": -28.2342548,
-        "posY": 0.9245064,
+        "posY": 0.9245063,
         "posZ": 13.5741577,
-        "rotX": 2.66694428E-06,
+        "rotX": 4.215649E-06,
         "rotY": 359.975739,
-        "rotZ": -3.37491724E-06,
+        "rotZ": 1.19262609E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -10360,9 +10360,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.17837587,
-        "g": 0.185075074,
-        "b": 0.2386682
+        "r": 0.17837581,
+        "g": 0.185075015,
+        "b": 0.238668144
       },
       "Tags": [
         "ii",
@@ -10413,11 +10413,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": -6.867074,
-        "posY": 0.9245063,
+        "posY": 0.9245064,
         "posZ": -12.6006851,
-        "rotX": -2.88789556E-06,
+        "rotX": 1.96081237E-06,
         "rotY": 180.009186,
-        "rotZ": 1.85929707E-06,
+        "rotZ": 1.68096892E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -10431,9 +10431,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.17837587,
-        "g": 0.185075074,
-        "b": 0.2386682
+        "r": 0.17837581,
+        "g": 0.185075015,
+        "b": 0.238668144
       },
       "Tags": [
         "iii",
@@ -10484,11 +10484,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": -31.3077316,
-        "posY": 0.924506366,
+        "posY": 0.9245064,
         "posZ": 13.5741577,
-        "rotX": 1.77481269E-07,
+        "rotX": 1.4795333E-07,
         "rotY": 359.984772,
-        "rotZ": 7.2374263E-07,
+        "rotZ": 5.826491E-07,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -10502,9 +10502,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.17837587,
-        "g": 0.185075074,
-        "b": 0.2386682
+        "r": 0.17837581,
+        "g": 0.185075015,
+        "b": 0.238668144
       },
       "Tags": [
         "iii",
@@ -10557,9 +10557,9 @@
         "posX": 8.597,
         "posY": 1.217087,
         "posZ": -15.735,
-        "rotX": -1.24508335E-06,
-        "rotY": 0.30289045,
-        "rotZ": 1.19516324E-06,
+        "rotX": -1.89594755E-06,
+        "rotY": 0.302890569,
+        "rotZ": 1.46701871E-06,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -10606,9 +10606,9 @@
         "posX": 11.2771072,
         "posY": 1.217087,
         "posZ": -15.6030607,
-        "rotX": -1.32410787E-06,
+        "rotX": -1.19768379E-06,
         "rotY": 359.974,
-        "rotZ": 8.36283562E-07,
+        "rotZ": 8.444482E-07,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -10655,9 +10655,9 @@
         "posX": -22.8747044,
         "posY": 1.24448466,
         "posZ": -15.7752018,
-        "rotX": 7.05757259E-07,
+        "rotX": -2.39326232E-06,
         "rotY": 359.97348,
-        "rotZ": 1.76403262E-07,
+        "rotZ": 9.205478E-07,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -10672,7 +10672,7 @@
       },
       "ColorDiffuse": {
         "r": 0.764808357,
-        "g": 0.406380981,
+        "g": 0.406380922,
         "b": 0.7588346
       },
       "Tags": [
@@ -10704,8 +10704,8 @@
         "posX": -18.6338539,
         "posY": 1.20789,
         "posZ": 16.3283043,
-        "rotX": 0.06378559,
-        "rotY": 359.9372,
+        "rotX": 0.06378418,
+        "rotY": 359.9367,
         "rotZ": 359.9352,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
@@ -10722,7 +10722,7 @@
       "ColorDiffuse": {
         "r": 0.9181184,
         "g": 0.633108139,
-        "b": 0.0847685
+        "b": 0.08476844
       },
       "Tags": [
         "bonus track",
@@ -10753,7 +10753,7 @@
         "posX": -15.8964939,
         "posY": 1.20463276,
         "posZ": 16.4853954,
-        "rotX": 0.06382197,
+        "rotX": 0.06382196,
         "rotY": 359.9663,
         "rotZ": 359.935242,
         "scaleX": 0.3544141,
@@ -10771,7 +10771,7 @@
       "ColorDiffuse": {
         "r": 0.9181184,
         "g": 0.633108139,
-        "b": 0.0847685
+        "b": 0.08476844
       },
       "Tags": [
         "Orange",
@@ -10802,8 +10802,8 @@
         "posX": 12.7808952,
         "posY": 1.17019618,
         "posZ": 16.3537331,
-        "rotX": 0.0636942,
-        "rotY": 359.858154,
+        "rotX": 0.0636943653,
+        "rotY": 359.858,
         "rotZ": 359.93512,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
@@ -10820,7 +10820,7 @@
       "ColorDiffuse": {
         "r": 0.869338036,
         "g": 0.8619713,
-        "b": 0.110553794
+        "b": 0.110553734
       },
       "Tags": [
         "bonus track",
@@ -10848,11 +10848,11 @@
       "GUID": "633e86",
       "Name": "BlockSquare",
       "Transform": {
-        "posX": 15.4892654,
+        "posX": 15.4892673,
         "posY": 1.16696548,
         "posZ": 16.5164528,
-        "rotX": 0.06388946,
-        "rotY": 0.0304931663,
+        "rotX": 0.06388993,
+        "rotY": 0.0305006467,
         "rotZ": 359.935333,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
@@ -10869,7 +10869,7 @@
       "ColorDiffuse": {
         "r": 0.869338036,
         "g": 0.8619713,
-        "b": 0.110553794
+        "b": 0.110553734
       },
       "Tags": [
         "summon gauge",
@@ -10900,9 +10900,9 @@
         "posX": -20.14124,
         "posY": 1.24448466,
         "posZ": -15.642724,
-        "rotX": -9.567738E-07,
-        "rotY": 0.014111843,
-        "rotZ": -1.37468021E-07,
+        "rotX": -7.880956E-07,
+        "rotY": 0.0141118178,
+        "rotZ": 3.07266617E-07,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -10917,7 +10917,7 @@
       },
       "ColorDiffuse": {
         "r": 0.764808357,
-        "g": 0.406380951,
+        "g": 0.4063809,
         "b": 0.7588346
       },
       "Tags": [
@@ -11017,7 +11017,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.22723636,
+        "r": 0.2272363,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -11049,9 +11049,9 @@
       "GUID": "23ec5f",
       "Name": "3DText",
       "Transform": {
-        "posX": -25.2612,
-        "posY": 1.12701488,
-        "posZ": -15.6008272,
+        "posX": -25.2612629,
+        "posY": 1.12701106,
+        "posZ": -15.6008348,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -11103,9 +11103,9 @@
       "GUID": "48b274",
       "Name": "3DText",
       "Transform": {
-        "posX": -28.3713589,
-        "posY": -0.9062607,
-        "posZ": -15.575139,
+        "posX": -28.3714218,
+        "posY": -0.9062646,
+        "posZ": -15.5751467,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -11178,7 +11178,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -11298,7 +11298,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.227236331,
+        "r": 0.227236271,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -11351,7 +11351,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.383100837
+        "b": 0.383100778
       },
       "Tags": [
         "destiny"
@@ -11421,7 +11421,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -11491,7 +11491,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -11540,9 +11540,9 @@
       "GUID": "975275",
       "Name": "3DText",
       "Transform": {
-        "posX": 2.62701035,
-        "posY": -0.8504744,
-        "posZ": -15.7009344,
+        "posX": 2.62698,
+        "posY": -0.8504782,
+        "posZ": -15.700942,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -11594,9 +11594,9 @@
       "GUID": "6c48c5",
       "Name": "3DText",
       "Transform": {
-        "posX": 5.949408,
-        "posY": 1.233897,
-        "posZ": -15.670413,
+        "posX": 5.949377,
+        "posY": 1.23389328,
+        "posZ": -15.6704187,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -11667,7 +11667,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.227236331,
+        "r": 0.227236271,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -11756,7 +11756,7 @@
         "posZ": 17.08,
         "rotX": -9.097785E-08,
         "rotY": 179.502274,
-        "rotZ": -1.45726196E-08,
+        "rotZ": -1.45726258E-08,
         "scaleX": 1.0,
         "scaleY": 1.0,
         "scaleZ": 1.0
@@ -11822,7 +11822,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.2272363,
+        "r": 0.227236241,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -11875,7 +11875,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -11945,7 +11945,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -12015,7 +12015,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -12085,7 +12085,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -12155,7 +12155,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -12225,7 +12225,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.3843062
+        "b": 0.384306133
       },
       "Tags": [
         "destiny"
@@ -12278,7 +12278,7 @@
         "posY": 1.05182481,
         "posZ": 15.8841476,
         "rotX": 355.294983,
-        "rotY": 0.0503838062,
+        "rotY": 0.05038382,
         "rotZ": -0.0036996,
         "scaleX": 0.425228179,
         "scaleY": 1.0,
@@ -12295,7 +12295,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.383100837
+        "b": 0.383100778
       },
       "Tags": [
         "destiny"
@@ -12365,7 +12365,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.383100837
+        "b": 0.383100778
       },
       "Tags": [
         "destiny"
@@ -12414,8 +12414,8 @@
       "GUID": "50469c",
       "Name": "3DText",
       "Transform": {
-        "posX": 21.101532,
-        "posY": -0.8798306,
+        "posX": 21.10152,
+        "posY": -0.8798297,
         "posZ": 16.2000866,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -12468,8 +12468,8 @@
       "GUID": "90d2d7",
       "Name": "3DText",
       "Transform": {
-        "posX": 17.7697525,
-        "posY": 1.12021267,
+        "posX": 17.7697411,
+        "posY": 1.12021458,
         "posZ": 16.2000866,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -12522,8 +12522,8 @@
       "GUID": "0e1960",
       "Name": "3DText",
       "Transform": {
-        "posX": -10.0949135,
-        "posY": -0.879682839,
+        "posX": -10.094945,
+        "posY": -0.8796818,
         "posZ": 16.2000866,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -12576,9 +12576,9 @@
       "GUID": "fb6f4f",
       "Name": "3DText",
       "Transform": {
-        "posX": -13.42117,
-        "posY": 1.1203481,
-        "posZ": 16.2003613,
+        "posX": -13.4212313,
+        "posY": 1.12034988,
+        "posZ": 16.2003632,
         "rotX": 90.0,
         "rotY": 180.0,
         "rotZ": 0.0,
@@ -12687,7 +12687,7 @@
         "posX": 32.79629,
         "posY": 1.13799858,
         "posZ": -2.59023285,
-        "rotX": 6.556819E-08,
+        "rotX": 4.537223E-08,
         "rotY": 180.0,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -15241,7 +15241,7 @@
         "posX": 29.78351,
         "posY": 1.426841,
         "posZ": -6.640177,
-        "rotX": -3.66206443E-08,
+        "rotX": -8.095962E-09,
         "rotY": 179.999985,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -21559,9 +21559,9 @@
       "Name": "Deck",
       "Transform": {
         "posX": 32.79629,
-        "posY": 0.9695072,
+        "posY": 0.9695073,
         "posZ": -6.64022255,
-        "rotX": -3.69320325E-08,
+        "rotX": -3.43258577E-08,
         "rotY": 180.0,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -21935,7 +21935,7 @@
         "posX": 35.752388,
         "posY": 1.13799858,
         "posZ": -2.59020233,
-        "rotX": -1.5694182E-08,
+        "rotX": -3.015207E-08,
         "rotY": 180.0,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -24477,9 +24477,9 @@
       "GUID": "85007e",
       "Name": "3DText",
       "Transform": {
-        "posX": 41.346714,
-        "posY": 0.9703279,
-        "posZ": 0.7861395,
+        "posX": 41.34672,
+        "posY": 0.9703269,
+        "posZ": 0.786138058,
         "rotX": 90.0,
         "rotY": 90.0,
         "rotZ": 0.0,
@@ -24577,8 +24577,8 @@
       "GUID": "7982cf",
       "Name": "3DText",
       "Transform": {
-        "posX": -3.61079431,
-        "posY": 0.961155355,
+        "posX": -3.61082482,
+        "posY": 0.9611556,
         "posZ": 6.70033455,
         "rotX": 90.0,
         "rotY": 1.15148364E-12,
@@ -24893,11 +24893,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": 3.08901358,
-        "posY": 0.9245063,
+        "posY": 0.9245064,
         "posZ": 13.5741577,
-        "rotX": 6.532909E-07,
+        "rotX": -6.39169828E-09,
         "rotY": 359.9758,
-        "rotZ": -2.7048236E-06,
+        "rotZ": -1.28809108E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -24911,9 +24911,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.17837587,
-        "g": 0.185075074,
-        "b": 0.2386682
+        "r": 0.17837581,
+        "g": 0.185075015,
+        "b": 0.238668144
       },
       "Tags": [
         "ii",
@@ -24963,12 +24963,12 @@
       "GUID": "fa98e4",
       "Name": "Custom_Tile",
       "Transform": {
-        "posX": 0.0655513853,
+        "posX": 0.0655514,
         "posY": 0.924506545,
         "posZ": 13.5741577,
-        "rotX": 6.79433242E-07,
-        "rotY": 0.0242130235,
-        "rotZ": 2.41907219E-06,
+        "rotX": 3.50796836E-06,
+        "rotY": 0.02421473,
+        "rotZ": -2.51530037E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -24982,9 +24982,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.17837587,
-        "g": 0.185075074,
-        "b": 0.2386682
+        "r": 0.17837581,
+        "g": 0.185075015,
+        "b": 0.238668144
       },
       "Tags": [
         "iii",
@@ -25034,8 +25034,8 @@
       "GUID": "ae099f",
       "Name": "3DText",
       "Transform": {
-        "posX": 3.0880928,
-        "posY": 0.9301172,
+        "posX": 3.08806252,
+        "posY": 0.9301191,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -25088,8 +25088,8 @@
       "GUID": "7cacdd",
       "Name": "3DText",
       "Transform": {
-        "posX": 0.06809235,
-        "posY": 0.9301155,
+        "posX": 0.06806183,
+        "posY": 0.930117369,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -25142,8 +25142,8 @@
       "GUID": "709559",
       "Name": "3DText",
       "Transform": {
-        "posX": -28.2337818,
-        "posY": 0.9301175,
+        "posX": -28.2338428,
+        "posY": 0.930119455,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -25196,8 +25196,8 @@
       "GUID": "beeb1d",
       "Name": "3DText",
       "Transform": {
-        "posX": -31.3137512,
-        "posY": 0.9301173,
+        "posX": -31.3138142,
+        "posY": 0.9301192,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -25250,11 +25250,11 @@
       "GUID": "fdd082",
       "Name": "3DText",
       "Transform": {
-        "posX": -9.884995,
-        "posY": 0.9297688,
-        "posZ": -15.4591932,
+        "posX": -9.885025,
+        "posY": 0.929765,
+        "posZ": -15.459199,
         "rotX": 90.0,
-        "rotY": 0.8935259,
+        "rotY": 0.893526256,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -25304,11 +25304,11 @@
       "GUID": "89fde0",
       "Name": "3DText",
       "Transform": {
-        "posX": -6.8649826,
-        "posY": 0.9297695,
-        "posZ": -15.4591932,
+        "posX": -6.8650136,
+        "posY": 0.9297657,
+        "posZ": -15.459199,
         "rotX": 90.0,
-        "rotY": 0.8935259,
+        "rotY": 0.893526256,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -25358,11 +25358,11 @@
       "GUID": "ba874d",
       "Name": "3DText",
       "Transform": {
-        "posX": 21.2962074,
-        "posY": 0.9297689,
-        "posZ": -15.4591932,
+        "posX": 21.2961922,
+        "posY": 0.9297651,
+        "posZ": -15.459199,
         "rotX": 90.0,
-        "rotY": 0.8935259,
+        "rotY": 0.893526256,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -25413,10 +25413,10 @@
       "Name": "3DText",
       "Transform": {
         "posX": 24.4969311,
-        "posY": 0.929769635,
-        "posZ": -15.4591932,
+        "posY": 0.9297658,
+        "posZ": -15.459199,
         "rotX": 90.0,
-        "rotY": 0.8935259,
+        "rotY": 0.893526256,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -25466,12 +25466,12 @@
       "GUID": "3e989e",
       "Name": "Custom_Token",
       "Transform": {
-        "posX": -31.7155247,
-        "posY": 1.074506,
+        "posX": -31.7155266,
+        "posY": 1.07450628,
         "posZ": -16.49727,
-        "rotX": 7.954608E-06,
-        "rotY": 179.474731,
-        "rotZ": 1.25750084E-05,
+        "rotX": -1.79829158E-06,
+        "rotY": 179.474869,
+        "rotZ": 1.26131217E-05,
         "scaleX": 0.6078094,
         "scaleY": 1.0,
         "scaleZ": 0.6078094
@@ -25526,12 +25526,12 @@
       "GUID": "128cb4",
       "Name": "Custom_Token",
       "Transform": {
-        "posX": -31.7083435,
-        "posY": 0.9745064,
+        "posX": -31.7083454,
+        "posY": 0.974506438,
         "posZ": -16.4977989,
-        "rotX": 3.17347531E-06,
-        "rotY": 179.99263,
-        "rotZ": -3.71988267E-06,
+        "rotX": -1.8283074E-06,
+        "rotY": 179.9927,
+        "rotZ": 2.27459441E-06,
         "scaleX": 0.6078094,
         "scaleY": 1.0,
         "scaleZ": 0.6078094
@@ -25545,9 +25545,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.3449441,
-        "g": 0.3449441,
-        "b": 0.3449441,
+        "r": 0.34494403,
+        "g": 0.34494403,
+        "b": 0.34494403,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -25603,9 +25603,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.3449441,
-        "g": 0.3449441,
-        "b": 0.3449441,
+        "r": 0.34494403,
+        "g": 0.34494403,
+        "b": 0.34494403,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -25661,9 +25661,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.3449441,
-        "g": 0.3449441,
-        "b": 0.3449441,
+        "r": 0.34494403,
+        "g": 0.34494403,
+        "b": 0.34494403,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -25759,9 +25759,9 @@
         "posX": 26.41,
         "posY": 1.38678658,
         "posZ": -2.72,
-        "rotX": 2.036954E-07,
-        "rotY": -3.65110964E-08,
-        "rotZ": -6.43508642E-08,
+        "rotX": 9.382804E-09,
+        "rotY": -3.49912739E-08,
+        "rotZ": -1.6393858E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -25867,9 +25867,9 @@
         "posX": 26.4102974,
         "posY": 1.38678658,
         "posZ": -3.76409841,
-        "rotX": 2.1507347E-09,
-        "rotY": 1.275315E-07,
-        "rotZ": 5.297344E-08,
+        "rotX": 8.363487E-08,
+        "rotY": 1.25756827E-07,
+        "rotZ": 8.753103E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -25972,12 +25972,12 @@
       "GUID": "42704e",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 26.4100113,
+        "posX": 26.4100132,
         "posY": 1.38678658,
-        "posZ": -4.80000734,
-        "rotX": -8.750494E-06,
-        "rotY": 0.00353652774,
-        "rotZ": -3.63691879E-06,
+        "posZ": -4.800008,
+        "rotX": -1.21324292E-05,
+        "rotY": 0.00377756986,
+        "rotZ": -2.47879343E-05,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26083,9 +26083,9 @@
         "posX": 26.41,
         "posY": 1.38678658,
         "posZ": -5.84,
-        "rotX": -2.73966965E-08,
-        "rotY": 1.05921458E-07,
-        "rotZ": 1.844863E-08,
+        "rotX": -9.0678E-08,
+        "rotY": 1.12240834E-07,
+        "rotZ": 3.330313E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26192,7 +26192,7 @@
         "posY": 1.3867867,
         "posZ": -4.77409458,
         "rotX": 270.0,
-        "rotY": -8.139475E-05,
+        "rotY": -8.280779E-05,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -26298,9 +26298,9 @@
       "Transform": {
         "posX": 22.8121262,
         "posY": 1.38678658,
-        "posZ": -3.764075,
+        "posZ": -3.76407528,
         "rotX": 270.0,
-        "rotY": 0.34030816,
+        "rotY": 0.340308,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -26408,7 +26408,7 @@
         "posY": 1.3867867,
         "posZ": -5.80409431,
         "rotX": 270.0,
-        "rotY": -3.347665E-05,
+        "rotY": -3.47718778E-05,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -26513,10 +26513,10 @@
       "Name": "Custom_Dice",
       "Transform": {
         "posX": 22.8128529,
-        "posY": 1.38678658,
-        "posZ": -2.72409582,
+        "posY": 1.38678646,
+        "posZ": -2.724096,
         "rotX": 270.0,
-        "rotY": 1.49924326,
+        "rotY": 1.499236,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -26624,7 +26624,7 @@
         "posY": 1.3867867,
         "posZ": -6.874093,
         "rotX": 270.0,
-        "rotY": -9.19261438E-05,
+        "rotY": -9.26999855E-05,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -26731,9 +26731,9 @@
         "posX": 24.0107155,
         "posY": 1.38678682,
         "posZ": -2.72001672,
-        "rotX": -1.61443054E-07,
+        "rotX": -1.51801288E-07,
         "rotY": 359.6653,
-        "rotZ": 2.11581437E-08,
+        "rotZ": 2.54595456E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26837,11 +26837,11 @@
       "Name": "Custom_Dice",
       "Transform": {
         "posX": 24.01,
-        "posY": 1.38678646,
+        "posY": 1.38678658,
         "posZ": -3.76,
-        "rotX": -5.748759E-07,
-        "rotY": 8.20651138E-08,
-        "rotZ": -1.25378591E-07,
+        "rotX": 4.37847447E-08,
+        "rotY": 9.40077456E-08,
+        "rotZ": 2.28820738E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26944,12 +26944,12 @@
       "GUID": "cd2158",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 24.0100212,
+        "posX": 24.0100231,
         "posY": 1.38678658,
         "posZ": -4.800009,
-        "rotX": -6.34703E-06,
-        "rotY": 0.0033557748,
-        "rotZ": 2.29755351E-05,
+        "rotX": 8.798473E-06,
+        "rotY": 0.00354728824,
+        "rotZ": -1.80463144E-06,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27055,9 +27055,9 @@
         "posX": 24.01,
         "posY": 1.38678658,
         "posZ": -5.84,
-        "rotX": -3.86935625E-07,
-        "rotY": 8.179736E-08,
-        "rotZ": 4.470948E-07,
+        "rotX": -6.95635549E-08,
+        "rotY": 8.39566354E-08,
+        "rotZ": -2.60514348E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27163,8 +27163,8 @@
         "posX": 24.01,
         "posY": 1.386787,
         "posZ": -6.88,
-        "rotX": -1.19049686E-08,
-        "rotY": -2.63826848E-07,
+        "rotX": -1.81674409E-07,
+        "rotY": -2.923118E-07,
         "rotZ": 180.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -27271,9 +27271,9 @@
         "posX": 25.2,
         "posY": 1.38678658,
         "posZ": -2.72,
-        "rotX": -8.935958E-08,
-        "rotY": 4.30156319E-08,
-        "rotZ": -3.95116651E-08,
+        "rotX": 1.34134112E-07,
+        "rotY": 4.26541824E-08,
+        "rotZ": -4.4470486E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27379,9 +27379,9 @@
         "posX": 25.19821,
         "posY": 1.38678646,
         "posZ": -3.75994039,
-        "rotX": -4.86051022E-08,
-        "rotY": 0.8381381,
-        "rotZ": 1.34506081E-07,
+        "rotX": -1.12760993E-07,
+        "rotY": 0.838138342,
+        "rotZ": 2.374511E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27484,12 +27484,12 @@
       "GUID": "14e7cd",
       "Name": "Custom_Dice",
       "Transform": {
-        "posX": 25.200016,
+        "posX": 25.2000179,
         "posY": 1.38678658,
-        "posZ": -4.80000925,
-        "rotX": 5.334914E-06,
-        "rotY": 0.00334183057,
-        "rotZ": 2.22395611E-05,
+        "posZ": -4.80000973,
+        "rotX": -3.549566E-06,
+        "rotY": 0.003502185,
+        "rotZ": -7.277873E-06,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27595,9 +27595,9 @@
         "posX": 25.2,
         "posY": 1.38678658,
         "posZ": -5.84,
-        "rotX": 1.7148901E-08,
-        "rotY": 1.54184946E-07,
-        "rotZ": 7.49848539E-08,
+        "rotX": 1.15880727E-08,
+        "rotY": 1.63202287E-07,
+        "rotZ": -1.64552771E-09,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27703,9 +27703,9 @@
         "posX": 25.2,
         "posY": 1.38678658,
         "posZ": -6.88,
-        "rotX": 1.04888827E-07,
-        "rotY": 1.37303346E-07,
-        "rotZ": 1.60722024E-07,
+        "rotX": 2.424647E-07,
+        "rotY": 8.122566E-08,
+        "rotZ": 1.36422884E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27811,8 +27811,8 @@
         "posX": 26.41,
         "posY": 1.386787,
         "posZ": -6.88,
-        "rotX": -1.89891168E-07,
-        "rotY": -1.44464167E-07,
+        "rotX": -3.88775561E-07,
+        "rotY": -1.5160235E-07,
         "rotZ": 180.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -27919,9 +27919,9 @@
         "posX": 32.620388,
         "posY": 1.38678658,
         "posZ": -10.9261465,
-        "rotX": 1.17372663E-08,
-        "rotY": -5.651027E-05,
-        "rotZ": 2.02182335E-07,
+        "rotX": 2.11349857E-07,
+        "rotY": -5.65075861E-05,
+        "rotZ": 7.62063763E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -28161,7 +28161,7 @@
         "posX": 29.7834988,
         "posY": 1.04171789,
         "posZ": -2.59017134,
-        "rotX": 2.908624E-08,
+        "rotX": -2.85429334E-08,
         "rotY": 179.992188,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -29462,9 +29462,9 @@
       "GUID": "a7ee19",
       "Name": "3DText",
       "Transform": {
-        "posX": -5.08619738,
-        "posY": 0.961058438,
-        "posZ": -3.99539828,
+        "posX": -5.08622742,
+        "posY": 0.9610565,
+        "posZ": -3.99540281,
         "rotX": 90.0,
         "rotY": 1.15148364E-12,
         "rotZ": 0.0,
@@ -29516,9 +29516,9 @@
       "GUID": "adfe86",
       "Name": "3DText",
       "Transform": {
-        "posX": -2.005066,
-        "posY": 0.9610578,
-        "posZ": -3.99537277,
+        "posX": -2.00509667,
+        "posY": 0.9610558,
+        "posZ": -3.99537635,
         "rotX": 90.0,
         "rotY": 1.15148364E-12,
         "rotZ": 0.0,
@@ -29624,8 +29624,8 @@
       "GUID": "0a9eec",
       "Name": "3DText",
       "Transform": {
-        "posX": -8.219129,
-        "posY": 0.9611722,
+        "posX": -8.219158,
+        "posY": 0.9611731,
         "posZ": 9.992508,
         "rotX": 90.0,
         "rotY": 0.0,
@@ -29678,9 +29678,9 @@
       "GUID": "0f525b",
       "Name": "3DText",
       "Transform": {
-        "posX": -2.0010376,
-        "posY": 0.4999352,
-        "posZ": -4.00013,
+        "posX": -2.00106835,
+        "posY": 0.499933243,
+        "posZ": -4.00013351,
         "rotX": 90.0,
         "rotY": -1.2541615E-07,
         "rotZ": 0.0,
@@ -29732,9 +29732,9 @@
       "GUID": "1117ad",
       "Name": "3DText",
       "Transform": {
-        "posX": -5.091042,
-        "posY": 0.4999349,
-        "posZ": -4.00013,
+        "posX": -5.09107256,
+        "posY": 0.499933034,
+        "posZ": -4.00013351,
         "rotX": 90.0,
         "rotY": -1.2541615E-07,
         "rotZ": 0.0,
@@ -29951,9 +29951,9 @@
         "posX": 31.8746014,
         "posY": 0.974506438,
         "posZ": -18.1235847,
-        "rotX": -5.203464E-07,
+        "rotX": -1.78391031E-06,
         "rotY": 180.0,
-        "rotZ": -3.12240763E-06,
+        "rotZ": -3.56282385E-06,
         "scaleX": 0.335945159,
         "scaleY": 1.0,
         "scaleZ": 0.335945159
@@ -30014,9 +30014,9 @@
         "posX": 31.8117027,
         "posY": 0.924506545,
         "posZ": -16.3919754,
-        "rotX": 4.86634377E-09,
+        "rotX": 1.71683638E-07,
         "rotY": 180.00145,
-        "rotZ": -5.72795962E-08,
+        "rotZ": -1.03510409E-07,
         "scaleX": 0.32,
         "scaleY": 1.0,
         "scaleZ": 0.32
@@ -30077,9 +30077,9 @@
         "posX": 28.83802,
         "posY": 0.974506438,
         "posZ": -16.4715538,
-        "rotX": -2.608789E-06,
+        "rotX": -4.79093433E-06,
         "rotY": 180.000565,
-        "rotZ": -3.0925662E-07,
+        "rotZ": 1.6230498E-06,
         "scaleX": 0.434757948,
         "scaleY": 1.0,
         "scaleZ": 0.434757948
@@ -30140,9 +30140,9 @@
         "posX": 35.4847946,
         "posY": 0.9745065,
         "posZ": -17.1192875,
-        "rotX": -5.55049233E-08,
+        "rotX": -1.01869682E-06,
         "rotY": 179.963,
-        "rotZ": -6.003522E-07,
+        "rotZ": 5.82222164E-08,
         "scaleX": 0.7152412,
         "scaleY": 1.0,
         "scaleZ": 0.7152412
@@ -30205,7 +30205,7 @@
           "Rotation": {
             "x": -1.981969E-05,
             "y": 359.909668,
-            "z": -6.88787668E-06
+            "z": -6.88787532E-06
           },
           "Tags": [
             "water",
@@ -30241,7 +30241,7 @@
             "z": -0.70117563
           },
           "Rotation": {
-            "x": 2.29851448E-05,
+            "x": 2.29851485E-05,
             "y": 359.9719,
             "z": 4.056455E-06
           },
@@ -30259,7 +30259,7 @@
       "GUID": "62d1f0",
       "Name": "3DText",
       "Transform": {
-        "posX": 2.174408,
+        "posX": 2.17437768,
         "posY": 0.961132169,
         "posZ": 4.55878,
         "rotX": 90.0,
@@ -30538,9 +30538,9 @@
       "GUID": "ea859b",
       "Name": "3DText",
       "Transform": {
-        "posX": 5.949408,
-        "posY": 0.9610565,
-        "posZ": -13.4701319,
+        "posX": 5.949377,
+        "posY": 0.9610527,
+        "posZ": -13.4701385,
         "rotX": 90.0,
         "rotY": 0.0,
         "rotZ": 0.0,
@@ -30592,9 +30592,9 @@
       "GUID": "516b1f",
       "Name": "3DText",
       "Transform": {
-        "posX": -25.2612,
-        "posY": 0.9610574,
-        "posZ": -13.4701319,
+        "posX": -25.2612629,
+        "posY": 0.96105355,
+        "posZ": -13.4701385,
         "rotX": 90.0,
         "rotY": 0.0,
         "rotZ": 0.0,
@@ -30646,9 +30646,9 @@
       "GUID": "6170a1",
       "Name": "3DText",
       "Transform": {
-        "posX": -13.42117,
-        "posY": 0.96117264,
-        "posZ": 14.140111,
+        "posX": -13.4212313,
+        "posY": 0.9611745,
+        "posZ": 14.1401167,
         "rotX": 90.0,
         "rotY": 180.0,
         "rotZ": 0.0,
@@ -30700,8 +30700,8 @@
       "GUID": "ef8ba4",
       "Name": "3DText",
       "Transform": {
-        "posX": 17.7697525,
-        "posY": 0.9611723,
+        "posX": 17.7697411,
+        "posY": 0.96117413,
         "posZ": 14.1400051,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -30754,9 +30754,9 @@
       "GUID": "4f1cb7",
       "Name": "3DText",
       "Transform": {
-        "posX": -3.53054833,
-        "posY": 0.961153865,
-        "posZ": 11.2097464,
+        "posX": -3.53057885,
+        "posY": 0.961154938,
+        "posZ": 11.2097483,
         "rotX": 90.0,
         "rotY": 0.0,
         "rotZ": 0.0,
@@ -30852,7 +30852,7 @@
       "GridProjection": false,
       "HideWhenFaceDown": false,
       "Hands": false,
-      "LuaScript": "Utility = nil\r\nDataScript = nil\r\n\r\nfunction onload()\r\n    Utility = getObjectFromGUID('47fd87')\r\n    DataScript = getObjectFromGUID('97996f')\r\nend\r\n\r\nfunction advanceTime()\r\n    local objects = self.getObjects()\r\n    if #objects == 0 then\r\n        print('Could not automatically advance the round because no dice was placed in the unused dice spot.')\r\n        return\r\n    end\r\n    local advanceTimeCount = objects[1].getRotationValue()\r\n    advanceTimeByAmount({AdvanceTimeCount= advanceTimeCount, MarkEndOfRound = true})\r\nend\r\n\r\n-- {AdvanceTimeCount, MarkEndOfRound}\r\nfunction advanceTimeByAmount(input)\r\n    local round = Utility.call('getRound')\r\n    -- round will be nil if the user spam changes the round\r\n    if round == nil then return end\r\n    local newRound = round + input.AdvanceTimeCount\r\n\r\n    local message = 'Starting a new round in '\r\n    if newRound > 12 then\r\n        local year = advanceYear(1)\r\n        message = message .. 'year ' .. year .. ', '\r\n        newRound = newRound - 12\r\n    end\r\n    if newRound < 1 then\r\n        local year = advanceYear(-1)\r\n        message = message .. 'year ' .. year .. ', '\r\n        newRound = 12\r\n    end\r\n\r\n    local season = Utility.call('getSeason', round)\r\n    local newSeason = Utility.call('getSeason', newRound)\r\n    local seasonChanged = false\r\n    if season ~= newSeason then\r\n        seasonChanged = true\r\n        greenPrint('The season changed to ' .. newSeason .. '.')\r\n        DataScript.call('highlightEffects', 'season')\r\n    end\r\n\r\n    message = message .. 'month ' .. newRound .. '.'\r\n    Utility.call('moveRound', newRound)\r\n    if input.MarkEndOfRound == true then\r\n        DataScript.call('highlightEffects', 'round')\r\n        untapCards()\r\n        greenPrint(message)\r\n    end\r\nend\r\n\r\nfunction advanceYear(amount)\r\n    local year = Utility.call('getYear') + amount\r\n    if year < 1 then return end\r\n    if year > 3 then\r\n        Turns.enable = false\r\n        Global.call('scorePadMenu', 'true')\r\n        year = 3\r\n    end\r\n    Utility.call('moveYear', year)\r\n    dealLibraryCards(year)\r\n    return year\r\nend\r\n\r\nfunction dealLibraryCards(year)\r\n    local romanYear = 'ii'\r\n    if year == 3 then romanYear = 'iii' end\r\n    local cardsWereDealt = false\r\n\r\n    for _, player in ipairs(Player.getPlayers()) do\r\n        local zone = getObjectsWithAllTags({'base', romanYear, player.color })[1]\r\n        for _, object in ipairs(zone.getObjects()) do\r\n            if object.type == 'Deck' then\r\n                object.deal(4, player.color)\r\n                cardsWereDealt = true\r\n            end\r\n        end\r\n    end\r\n    if cardsWereDealt == true then\r\n        print('Dealing year ' .. year .. ' cards from player libraries.')\r\n    end\r\nend\r\n\r\nfunction greenPrint(message)\r\n    printToAll(message, stringColorToRGB('Green'))\r\nend\r\n\r\nfunction untapCards()\r\n    local playerData = Global.getTable('Players')\r\n    local cards = {}\r\n    for _, player in ipairs(Player.getPlayers()) do\r\n        for _, zone in ipairs(getObjectsWithTag('tableau', player.color)) do\r\n            for _, card in ipairs(zone.getObjects()) do\r\n                card.setRotationSmooth(playerData[player.color].SpecialR)\r\n            end\r\n        end\r\n    end\r\n    return cards\r\nend\r\n",
+      "LuaScript": "Utility = nil\r\nDataScript = nil\r\n\r\nfunction onload()\r\n    Utility = getObjectFromGUID('47fd87')\r\n    DataScript = getObjectFromGUID('97996f')\r\nend\r\n\r\nfunction advanceTime()\r\n    local objects = self.getObjects()\r\n    if #objects == 0 then\r\n        print('Could not automatically advance the round because no dice was placed in the unused dice spot.')\r\n        return\r\n    end\r\n    local advanceTimeCount = objects[1].getRotationValue()\r\n    advanceTimeByAmount({AdvanceTimeCount= advanceTimeCount, MarkEndOfRound = true})\r\nend\r\n\r\n-- {AdvanceTimeCount, MarkEndOfRound}\r\nfunction advanceTimeByAmount(input)\r\n    local round = Utility.call('getRound')\r\n    -- round will be nil if the user spam changes the round\r\n    if round == nil then return end\r\n    local newRound = round + input.AdvanceTimeCount\r\n\r\n    local message = 'Starting a new round in '\r\n    if newRound > 12 then\r\n        local year = advanceYear(1)\r\n        message = message .. 'year ' .. year .. ', '\r\n        newRound = newRound - 12\r\n    end\r\n    if newRound < 1 then\r\n        local year = advanceYear(-1)\r\n        message = message .. 'year ' .. year .. ', '\r\n        newRound = 12\r\n    end\r\n\r\n    local season = Utility.call('getSeason', round)\r\n    local newSeason = Utility.call('getSeason', newRound)\r\n    local seasonChanged = false\r\n    if season ~= newSeason then\r\n        seasonChanged = true\r\n        greenPrint('The season changed to ' .. newSeason .. '.')\r\n        DataScript.call('highlightEffects', 'season')\r\n    end\r\n\r\n    message = message .. 'month ' .. newRound .. '.'\r\n    Utility.call('moveRound', newRound)\r\n    if input.MarkEndOfRound == true then\r\n        DataScript.call('highlightEffects', 'round')\r\n        untapCards()\r\n        greenPrint(message)\r\n    end\r\nend\r\n\r\nfunction advanceYear(amount)\r\n    local year = Utility.call('getYear') + amount\r\n    if year < 1 then return end\r\n    if year > 3 then\r\n        Turns.enable = false\r\n        Global.call('scorePadMenu', 'true')\r\n        year = 3\r\n    end\r\n    Utility.call('moveYear', year)\r\n    dealLibraryCards(year)\r\n    return year\r\nend\r\n\r\nfunction dealLibraryCards(year)\r\n    local romanYear = 'ii'\r\n    if year == 3 then romanYear = 'iii' end\r\n    local cardsWereDealt = false\r\n\r\n    for _, player in ipairs(Player.getPlayers()) do\r\n        local zone = getObjectsWithAllTags({'base', romanYear, player.color })[1]\r\n        for _, object in ipairs(zone.getObjects()) do\r\n            if object.type == 'Deck' then\r\n                object.deal(4, player.color)\r\n                cardsWereDealt = true\r\n            end\r\n        end\r\n    end\r\n    if cardsWereDealt == true then\r\n        print('Dealing year ' .. year .. ' cards from player libraries.')\r\n    end\r\nend\r\n\r\nfunction greenPrint(message)\r\n    printToAll(message, stringColorToRGB('Green'))\r\nend\r\n\r\nfunction untapCards()\r\n    local playerData = Global.getTable('Players')\r\n    local cards = {}\r\n    for _, player in ipairs(Player.getPlayers()) do\r\n        for _, zone in ipairs(getObjectsWithTag('tableau', player.color)) do\r\n            for _, card in ipairs(zone.getObjects()) do\r\n                card.setRotationSmooth(playerData[player.color].SpecialR)\r\n            end\r\n        end\r\n    end\r\n    return cards\r\nend",
       "LuaScriptState": ""
     },
     {
