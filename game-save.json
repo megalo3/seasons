@@ -1,7 +1,7 @@
 {
   "SaveName": "Seasons",
-  "EpochTime": 1696217081,
-  "Date": "10/1/2023 10:24:41 PM",
+  "EpochTime": 1696221644,
+  "Date": "10/1/2023 11:40:44 PM",
   "VersionNumber": "v13.2.2",
   "GameMode": "Seasons",
   "GameType": "Game",
@@ -403,7 +403,7 @@
   ],
   "LuaScript": "WorkshopId = '3035709037'\r\nsettings = {\r\n    difficulty = 'advanced',\r\n    enchantedKingdom = true,\r\n    pathOfDestiny = true,\r\n    promos = false,\r\n    enchantmentCards = true,\r\n    specialAbilityTokens = true,\r\n    setupComplete = false,\r\n    playerTurn = 'White',\r\n    changingTurns = false,\r\n    enchantmentCard = '',\r\n    specialAbility = {\r\n        White = '',\r\n        Pink = '',\r\n        Orange = '',\r\n        Yellow = ''\r\n    }\r\n}\r\n\r\nDrawPilePos = {-5.00, 2.5, -6.50}\r\nDiscardPilePos = {-2.00, 2.5, -6.50}\r\nCards = nil\r\nPlayers = {\r\n    White = {\r\n        FirstPlayer = {-0.60, 1, -16.50},\r\n        SpecialR = { 0.00, 180.00, 0.00 },\r\n        TableauX = { 6.15, 9.15, 12.15, 15.15, 18.15 },\r\n        TableauZ = { -2.38, -6.49, -10.57 }\r\n    },\r\n    Pink = {\r\n        FirstPlayer = {-31.71, 1, -16.50},\r\n        SpecialR = { 0.00, 180.00, 0.00 },\r\n        TableauX = {-25.07, -22.07, -19.07, -16.07, -13.07 },\r\n        TableauZ = {-2.38, -6.49, -10.57 }\r\n    },\r\n    Orange = {\r\n        FirstPlayer = {-6.86, 1, 16.99},\r\n        SpecialR = { 0.00, 0.00, 0.00 },\r\n        TableauX = { -13.07, -16.07, -19.07, -22.07, -25.07 },\r\n        TableauZ = { 3.30, 7.42, 11.52 }\r\n    },\r\n    Yellow = {\r\n        FirstPlayer = {24.45, 1, 16.99},\r\n        SpecialR = { 0.00, 0.00, 0.00 },\r\n        TableauX = { 18.15, 15.15, 12.15, 9.15, 6.15 },\r\n        TableauZ = { 3.30, 7.42, 11.52 }\r\n    }\r\n}\r\n\r\nDrawDeckZone = nil\r\nDiceBag = nil\r\nUtility = nil\r\nEnchantmentScript = nil\r\nDiceRollerScript = nil\r\nSpecialAbilityScript = nil\r\nDraftScript = nil\r\nDataScript = nil\r\nAdvanceTimeScript = nil\r\nScorePadScript = nil\r\n\r\nfunction onLoad(saveState)\r\n    AdvanceTimeScript = getObjectFromGUID('9439cf')\r\n    DrawDeckZone = getObjectFromGUID('00a61b')\r\n    DiceBag = getObjectsWithAllTags({'unused'})[1]\r\n    DataScript = getObjectFromGUID('97996f')\r\n    Utility = getObjectFromGUID('47fd87')\r\n    EnchantmentScript = getObjectFromGUID('8bb3b2')\r\n    DiceRollerScript = getObjectFromGUID('17754c')\r\n    SpecialAbilityScript = getObjectFromGUID('a3ee11')\r\n    DraftScript = getObjectFromGUID('0f55a3')\r\n    Cards = DataScript.getTable('Cards')\r\n    ScorePadScript = getObjectFromGUID('7f10ce')\r\n\r\n    local loadedData = JSON.decode(saveState)\r\n    if loadedData ~= nil then\r\n        settings = loadedData\r\n    end\r\n\r\n    math.randomseed(os.time())\r\n    -- Set items uninteractable\r\n    for key, object in ipairs(getObjectsWithTag('noninteractable')) do\r\n        object.interactable = false\r\n    end\r\n\r\n    if settings.setupComplete == false then\r\n        setupMenu('true')\r\n        yellowPrint('Hidden zone opacity can be changed in Menu -> Configuration -> Interface -> Misc. Settings -> Hidden Zone Hide Opacity.')\r\n        print('Players may choose a specific Enchantment card and place it in the Enchantment card slot. If not, an Enchantment card will be randomly selected.')\r\n    else\r\n        gatherItemsMenu('true')\r\n    end\r\nend\r\n\r\nfunction onSave()\r\n    return JSON.encode(settings)\r\nend\r\n\r\nfunction onPlayerTurn(player, previous_player)\r\n    if settings.setupComplete == false then return end\r\n    if settings.playerTurn == player.color and settings.changingTurns == false then\r\n        local next = Turns.getNextTurnColor()\r\n        settings.changingTurns = true\r\n        settings.playerTurn = next\r\n        Turns.turn_color = next\r\n        moveFirstPlayerToken()\r\n        AdvanceTimeScript.call('advanceTime')\r\n        print('First player moves to the next player.')\r\n    else\r\n        settings.changingTurns = false\r\n    end\r\nend\r\n\r\nfunction setupMenu(value)\r\n    UI.setAttribute('optionsMenu1', 'active', value)\r\n    UI.setAttribute('optionsMenu2', 'active', value)\r\n    UI.setAttribute('optionsMenu3', 'active', value)\r\nend\r\n\r\nfunction startingPlayerMenu(value)\r\n    UI.setAttribute('startPlayerMenu', 'active', value)\r\n    UI.setAttribute('startPlayerMenuButtons', 'active', value)\r\nend\r\n\r\nfunction gatherItemsMenu(value)\r\n    UI.setAttribute('gatherItemsMenu', 'active', 'true')\r\nend\r\n\r\nfunction scorePadMenu(value)\r\n    ScorePadScript.call('setAllTotals')\r\n    UI.setAttribute('ScorepadMenu', 'active', 'true')\r\nend\r\n\r\nfunction uiToggle(player, value, id)\r\n    if id == 'beginner' or id == 'intermediate' or id == 'advanced' then\r\n        if value == 'True' then\r\n            settings.difficulty = id\r\n        end\r\n    else\r\n        if value == 'True' then\r\n            settings[id] = true\r\n        else\r\n            settings[id] = false\r\n        end\r\n    end\r\nend\r\n\r\nfunction setup()\r\n    setupMenu('false')\r\n\r\n    if settings.enchantmentCards == true then\r\n        EnchantmentScript.call('dealEnchantmentCard')\r\n    else\r\n        EnchantmentScript.call('removeEnchantment')\r\n    end\r\n    if settings.enchantmentCard == 'Vision of Destiny' then\r\n        DrawPilePos[1] = DrawPilePos[1] - 3\r\n        DiscardPilePos[1] = DiscardPilePos[1] - 3\r\n        local drawDeckPos = DrawDeckZone.getPosition()\r\n        DrawDeckZone.setPosition({drawDeckPos[1] - 3, drawDeckPos[2], drawDeckPos[3]})\r\n        yellowPrint('Vision of Destiny Enchantment')\r\n        yellowPrint('The top two Power cards in the draw pile are systematically revealed and placed in a row next to the draw. The card farthest from the draw is considered to be the top card in the draw, and the other face-up card is deemed the second card in the draw.')\r\n    end\r\n\r\n    local baseDeck = getObjectsWithAllTags({'Deck', 'base'})[1]\r\n\r\n    if settings.difficulty == 'intermediate' or settings.difficulty == 'beginner' then\r\n        for index, card in ipairs(baseDeck.getObjects()) do\r\n            local info = Cards[card.name]\r\n            if info.Number < 31 then\r\n                Wait.frames(function()\r\n                    baseDeck.takeObject({\r\n                        guid = card.guid,\r\n                        position = DrawPilePos\r\n                    })\r\n                end, index*3)\r\n            end\r\n        end\r\n    end\r\n    local waitTime = 3\r\n    if settings.difficulty == 'advanced' then\r\n        baseDeck.setPositionSmooth(DrawPilePos)\r\n        waitTime = 1.3\r\n    end\r\n\r\n    Wait.time(function()\r\n        local deck = getDrawDeck()\r\n        if settings.pathOfDestiny == true then\r\n            deck.putObject(getObjectsWithAllTags({'Deck', 'path of destiny'})[1])\r\n        end\r\n        if settings.enchantedKingdom == true then\r\n            deck.putObject(getObjectsWithAllTags({'Deck', 'enchanted kingdom'})[1])\r\n        end\r\n        if settings.promos == true then\r\n            deck.putObject(getObjectsWithAllTags({'promo'})[1])\r\n        end\r\n        Wait.time(function()\r\n            deck.shuffle()\r\n\r\n            if settings.enchantmentCard == 'Vision of Destiny' then\r\n                visionOfDestinyShift()\r\n            end\r\n\r\n            getObjectFromGUID('7982cf').setValue('Prelude')\r\n            yellowPrint('The Prelude phase has begun.')\r\n            if settings.specialAbilityTokens == true then\r\n                SpecialAbilityScript.call('dealSpecialAbilityTokens')\r\n            end\r\n            DraftScript.call('dealStartingHand')\r\n        end, 1.7)\r\n    end, waitTime)\r\nend\r\n\r\nfunction visionOfDestinyShift()\r\n    local deck = getDrawDeck()\r\n\r\n    local topCardText = getObjectFromGUID('0f525b')\r\n    local topCardTextPos = topCardText.getPosition()\r\n    topCardText.setPositionSmooth({topCardTextPos[1], 1, topCardTextPos[3]})\r\n\r\n    local secondDrawText = getObjectFromGUID('1117ad')\r\n    local secondDrawTextPos = secondDrawText.getPosition()\r\n    secondDrawText.setPositionSmooth({secondDrawTextPos[1], 1, secondDrawTextPos[3]})\r\n\r\n    local drawText = getObjectFromGUID('a7ee19')\r\n    local drawTextPos = drawText.getPosition()\r\n    drawText.setPositionSmooth({drawTextPos[1]-3, drawTextPos[2], drawTextPos[3]})\r\n\r\n    local discardText = getObjectFromGUID('adfe86')\r\n    local discardTextPos = discardText.getPosition()\r\n    discardText.setPositionSmooth({discardTextPos[1]+3, discardTextPos[2], discardTextPos[3]})\r\n\r\n    deck.takeObject({\r\n        flip = true,\r\n        position = DiscardPilePos\r\n    })\r\n    deck.takeObject({\r\n        flip = true,\r\n        position = {DiscardPilePos[1]+3, DiscardPilePos[2], DiscardPilePos[3]}\r\n    })\r\n    resetTableGrid()\r\nend\r\n\r\nfunction setLibraryCards()\r\n    getDrawDeck().setName('Draw Deck')\r\n    local deckSize = 3\r\n    if settings.enchantmentCard == 'Extended Experience' then\r\n        deckSize = 4\r\n    end\r\n    print('Players must put ' .. deckSize .. ' cards under library II and ' .. deckSize .. ' cards under library III.')\r\n    if settings.specialAbilityTokens == true then\r\n        printToAll('Players must select their special ability token if they have not yet.', stringColorToRGB('Pink'))\r\n    end\r\n\r\n    startingPlayerMenu('true')\r\nend\r\n\r\nfunction startTournament()\r\n    settings.changingTurns = true\r\n    Turns.turn_color = settings.playerTurn\r\n\r\n    removeTwistOfFate()\r\n    DataScript.call('setCardEffects')\r\n\r\n    getObjectFromGUID('7982cf').setValue('Tournament')\r\n    startingPlayerMenu('false')\r\n    gatherItemsMenu('true')\r\n\r\n    local playerCount = #Player.getPlayers()\r\n    local diceRemovalCount = 4 - playerCount\r\n    local elements = {'air', 'earth', 'fire', 'water'}\r\n\r\n    for index, element in ipairs(elements) do\r\n        for x=1, diceRemovalCount do\r\n            Wait.time(function()\r\n                removeRandomDie(element)\r\n            end, (x - 1) * 1.5)\r\n        end\r\n    end\r\n\r\n    -- sort dice\r\n    Wait.time(function()\r\n        DiceRollerScript.call('returnDice', {'water', 'earth', 'fire', 'air'})\r\n    end, (diceRemovalCount - 1) * 2)\r\n\r\n    settings.setupComplete = true\r\n    yellowPrint('The Tournament has begun.')\r\n    moveFirstPlayerToken()\r\nend\r\n\r\nfunction removeTwistOfFate()\r\n -- Remove Twist of Fate on game start\r\n    local deck = getDrawDeck();\r\n    for _, card in ipairs(getDrawDeck().getObjects()) do\r\n        if card.name == 'Twist of Fate' then\r\n            DiceBag.putObject(\r\n                deck.takeObject({guid = card.guid})\r\n            )\r\n        end\r\n    end\r\nend\r\n\r\nfunction removeRandomDie(element)\r\n    local dice = getObjectsWithAllTags({'Die', element})\r\n    local random = Utility.call('rand', #dice)\r\n    DiceBag.putObject(dice[random])\r\nend\r\n\r\nfunction moveFirstPlayerToken()\r\n    local token = getObjectsWithAllTags({'first player token'})[1]\r\n    token.setPositionSmooth(Players[settings.playerTurn].FirstPlayer)\r\n    token.setRotationSmooth(Players[settings.playerTurn].SpecialR)\r\nend\r\n\r\nfunction startingPlayerSelected(player, value, id)\r\n    local colorOrder = {\r\n        White = 'Pink',\r\n        Pink = 'Orange',\r\n        Orange = 'Yellow',\r\n        Yellow = 'White'\r\n    }\r\n    local nonSeated = Utility.call('getNonSeatedPlayerColors')\r\n    for x=1,3 do\r\n        if has_value(nonSeated, value) == true then\r\n            value = colorOrder[value]\r\n        end\r\n    end\r\n    settings.playerTurn = value\r\nend\r\n\r\nfunction getDrawDeck()\r\n    return Utility.call('getDeckFromZone', DrawDeckZone)\r\nend\r\n\r\nfunction yellowPrint(message)\r\n    printToAll(message, stringColorToRGB('Yellow'))\r\nend\r\n\r\nTokenBags = {\r\n    air = 'a0c85d',\r\n    fire = 'ecfadc',\r\n    water = 'd2a187',\r\n    earth = 'f61095',\r\n}\r\nTokenBags['decrease energy'] = '9a6508'\r\n\r\nfunction spawnitem(player, b, id)\r\n    if id == 'air' or id == 'earth' or id == 'water' or id == 'fire' then\r\n        spawnElement(player, id)\r\n    elseif id == 'crystal' then\r\n        changeCrystals(1, player)\r\n    elseif id == 'summongauge' then\r\n        moveSummonGauge('positive', player)\r\n    end\r\nend\r\n\r\nfunction despawnitem(player, b, id)\r\n    if id == 'air' or id == 'earth' or id == 'water' or id == 'fire' then\r\n        despawnElement(player, id)\r\n    elseif id == 'crystal' then\r\n        changeCrystals(-1, player)\r\n    elseif id == 'summongauge' then\r\n        moveSummonGauge('negative', player)\r\n    end\r\nend\r\n\r\nfunction transmuteitem(player, b, id)\r\n    function purseOfIoCount(color)\r\n        local zone = getObjectsWithTag('tableau', color)[1]\r\n        local count = 0\r\n        for _, card in ipairs(zone.getObjects()) do\r\n            if card.type == 'Card' and card.getName() == 'Purse of Io' then\r\n                count = count + 1\r\n            end\r\n        end\r\n        return count\r\n    end\r\n\r\n    local round = Utility.call('getRound')\r\n    local season = Utility.call('getSeason', round)\r\n    local transmuteValues = {\r\n        Winter = {\r\n            air = 1,\r\n            earth = 3,\r\n            water = 1,\r\n            fire = 2\r\n        },\r\n        Spring = {\r\n            air = 2,\r\n            earth = 1,\r\n            water = 1,\r\n            fire = 3\r\n        },\r\n        Summer = {\r\n            air = 3,\r\n            earth = 1,\r\n            water = 2,\r\n            fire = 1\r\n        },\r\n        Fall = {\r\n            air = 1,\r\n            earth = 2,\r\n            water = 3,\r\n            fire = 1\r\n        },\r\n    }\r\n\r\n    -- Natural Balance enhancement makes all energy tokens transmute to 2 crystals\r\n    local transmuteCount = transmuteValues[season][id]\r\n    if settings.enchantmentCard == 'Natural Balance' then\r\n        transmuteCount = 2\r\n    end\r\n\r\n    local hasElement = despawnElement(player, id, true)\r\n    if hasElement ~= false then\r\n        local purseOfIoCount = purseOfIoCount(player.color)\r\n        local transmuteCount = transmuteCount + purseOfIoCount\r\n\r\n        -- Io's Bounty gives a +1 bonus to transmutation\r\n        if settings.enchantmentCard == \"Io's Bounty\" then\r\n            transmuteCount = transmuteCount + 1\r\n        end\r\n        changeCrystals(transmuteCount, player, id, purseOfIoCount)\r\n    end\r\nend\r\n\r\nfunction changeCrystals(increment, player, transmuteElement, purseOfIoCount)\r\n    local crystals = getObjectsWithAllTags({player.color, 'crystals'})[1]\r\n    local newValue = crystals.getValue() + increment\r\n    if newValue < 0 then\r\n        yellowPrint('Crystal count can not go below 0.')\r\n        return\r\n    end\r\n    local incdec = 'gained'\r\n    if increment < 0 then incdec = 'removed' end\r\n    local message = player.color .. \" player has \" .. incdec .. \" \" .. math.abs(increment) .. \" crystals to a total of \" .. newValue .. \" crystals.\"\r\n    if transmuteElement ~= nil then\r\n        local purseOfIoMessage = ''\r\n        if purseOfIoCount > 0 then\r\n            purseOfIoMessage = ' (' .. purseOfIoCount .. 'x Purse of Io bonus)'\r\n        end\r\n        message = player.color .. \" player has transmuted \" .. transmuteElement .. \" into \" .. increment .. \" crystals\" .. purseOfIoMessage .. \" to a total of \" .. newValue .. \" crystals.\"\r\n    end\r\n    printToAll(message, stringColorToRGB(player.color))\r\n\r\n    crystals.setValue(newValue)\r\nend\r\n\r\nfunction moveSummonGauge(direction, player)\r\n    function sortBlockX(a,b)\r\n        if player.color == 'Orange' or player.color == 'Yellow' then\r\n            return a[1] > b[1]\r\n        end\r\n        return a[1] < b[1]\r\n    end\r\n    function roundPosition(position)\r\n        return {\r\n            round(position[1], 2),\r\n            round(position[2]+.3, 2),\r\n            round(position[3], 2)\r\n        }\r\n    end\r\n\r\n    local board = getObjectsWithAllTags({player.color, 'player board'})[1]\r\n    local block = getObjectsWithAllTags({player.color, 'summon gauge'})[1]\r\n    local blockPosition = roundPosition(block.getPosition())\r\n    local gaugeIndex = 0\r\n    local points = {}\r\n    for _, point in ipairs(board.getSnapPoints()) do\r\n        if has_value(point.tags, 'summon gauge') then\r\n            local position = board.positionToWorld(point.position)\r\n            local roundedPosition = roundPosition(position)\r\n            table.insert(points, roundedPosition)\r\n        end\r\n    end\r\n    table.sort(points, sortBlockX)\r\n\r\n    for index, point in ipairs(points) do\r\n        if (point[1] == blockPosition[1]) then\r\n            gaugeIndex = index\r\n        end\r\n    end\r\n\r\n    if gaugeIndex == 0 then return end\r\n    if direction == 'positive' then\r\n        if gaugeIndex > 15 then\r\n            yellowPrint('You increase your summoning gauge past 15.')\r\n            return;\r\n        end\r\n        printToAll(player.color .. \" player increased their summoning gauge to \" .. gaugeIndex .. '.', stringColorToRGB(player.color))\r\n        block.setPositionSmooth(points[gaugeIndex + 1], false, true)\r\n    elseif direction == 'negative' then\r\n        if gaugeIndex <= 1 then\r\n            yellowPrint('You cannot reduce your summoning gauge below 0.')\r\n            return;\r\n        end\r\n        printToAll(player.color .. \" player decreerased their summoning gauge to \" .. gaugeIndex -2 .. '.', stringColorToRGB(player.color))\r\n        block.setPositionSmooth(points[gaugeIndex - 1], false, true)\r\n    end\r\nend\r\n\r\nfunction spawnElement(player, element)\r\n    local remainingSpace = getRemainingTokenSpace(player.color)\r\n    if remainingSpace == 0 then\r\n        yellowPrint(player.color .. ' has no space left for energy.')\r\n        return\r\n    end\r\n\r\n    moveTokensLeft(player.color)\r\n\r\n    local totalSlots = getTokenSlotCount(player.color)\r\n    local snapPositionIndex = totalSlots - remainingSpace + 1\r\n\r\n    local positions = getPointPositions(player.color)\r\n\r\n    local bag = getObjectFromGUID(TokenBags[element])\r\n    bag.takeObject({\r\n        position = positions[snapPositionIndex],\r\n        rotation = Players[player.color].SpecialR,\r\n        smooth = false\r\n    })\r\n    printToAll(player.color .. ' player gained ' .. element .. ' energy.', stringColorToRGB(player.color))\r\nend\r\n\r\nfunction despawnElement(player, element, skipMessage)\r\n    for _, token in ipairs(getTokens(player.color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag == element then\r\n            destroyObject(token)\r\n            if skipMessage ~= true then\r\n                printToAll(player.color .. ' player spent ' .. element .. ' energy.', stringColorToRGB(player.color))\r\n            end\r\n            Wait.frames(function()\r\n                moveTokensLeft(player.color)\r\n            end, 10)\r\n            return\r\n        end\r\n    end\r\n    yellowPrint(player.color .. ' has no ' .. element .. ' energy to spend.')\r\n    return false\r\nend\r\n\r\nfunction resetTableGrid()\r\n    getObjectFromGUID('4ee1f2').call('onLoad')\r\nend\r\n\r\nfunction has_value(tab, val)\r\n    for index, value in ipairs(tab) do\r\n        if value == val then\r\n            return true\r\n        end\r\n    end\r\n    return false\r\nend\r\n\r\nTokenZones = {\r\n    White = '2b8d13',\r\n    Pink = 'b5eb64',\r\n    Orange = '879ee3',\r\n    Yellow = '4b2d0e'\r\n}\r\nfunction getPointPositions(color)\r\n    local points = {}\r\n    for _, point in ipairs(Global.getSnapPoints()) do\r\n        if has_value(point.tags, color) == true then\r\n            table.insert(points, point.position)\r\n        end\r\n    end\r\n\r\n    local grimoire = nil\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag == 'grimoire' then grimoire = token end\r\n    end\r\n\r\n    if grimoire ~= nil then\r\n        for _, point in ipairs(grimoire.getSnapPoints()) do\r\n            table.insert(points, grimoire.positionToWorld(point.position))\r\n        end\r\n    end\r\n\r\n    return points\r\nend\r\n\r\nfunction getTokens(color)\r\n    local zone = getObjectFromGUID(TokenZones[color])\r\n    return zone.getObjects()\r\nend\r\n\r\nfunction getTokenCount(color)\r\n    local count = {\r\n        air = 0,\r\n        fire = 0,\r\n        water = 0,\r\n        earth = 0,\r\n        grimoire = 0\r\n    }\r\n    count['decrease energy'] = 0\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if token.type ~= 'Dice' then\r\n            count[tag] = count[tag] + 1\r\n        end\r\n    end\r\n    return count\r\nend\r\n\r\nfunction getRemainingTokenSpace(color)\r\n    local count = getTokenCount(color)\r\n    local total = count.air + count.fire + count.water + count.earth + count['decrease energy']\r\n    local max = 7\r\n    if count.grimoire > 0 then max = 10 end\r\n    return max - total\r\nend\r\n\r\nfunction hasGrimoire(color)\r\n    return getTokenCount(color).grimoire > 0\r\nend\r\n\r\nfunction getTokenSlotCount(color)\r\n    local count = 7\r\n    if hasGrimoire(color) == true then\r\n        count = 10\r\n    end\r\n    return count\r\nend\r\n\r\nfunction moveTokensLeft(color)\r\n    local slot = 1\r\n    local positions = getPointPositions(color)\r\n    for _, token in ipairs(getTokens(color)) do\r\n        local tag = token.getTags()[1]\r\n        if tag ~= 'grimoire' and token.type ~= 'Dice' then\r\n            token.setPositionSmooth(positions[slot])\r\n            slot = slot + 1\r\n        end\r\n    end\r\nend\r\n\r\nfunction round(number, places)\r\n    local mult = 10^(places or 0)\r\n    return math.floor(number * mult + 0.5) / mult\r\nend\r\n\r\nfunction scoreChange(player, value, id)\r\n    ScorePadScript.call('scoreChange', { id = id, value = value })\r\nend",
   "LuaScriptState": "{\"changingTurns\":false,\"difficulty\":\"advanced\",\"enchantedKingdom\":true,\"enchantmentCard\":\"\",\"enchantmentCards\":true,\"pathOfDestiny\":false,\"playerTurn\":\"White\",\"promos\":false,\"setupComplete\":false,\"specialAbility\":{\"Orange\":\"\",\"Pink\":\"\",\"White\":\"\",\"Yellow\":\"\"},\"specialAbilityTokens\":true}",
-  "XmlUI": "<Defaults>\r\n    <Panel\r\n            class=\"score\"\r\n            height=\"50\"\r\n            width=\"50\"\r\n            rectAlignment=\"UpperLeft\" />\r\n    <Panel\r\n            class=\"itemannouncePanel\"\r\n            active=\"false\"\r\n            rectAlignment=\"LowerRight\"\r\n            showAnimation=\"FadeIn\"\r\n            hideAnimation=\"FadeOut\"\r\n            animationDuration=\"0.6\"\r\n            hideAnimationDelay=\"0.5\"\r\n            height=\"100\"\r\n            width=\"300\" />\r\n    <Text\r\n            class=\"itemannounceText\"\r\n            fontSize=\"25\"\r\n            color=\"#FFFFFF\"\r\n            fontstyle=\"Bold\"\r\n            outline=\"#000000\"\r\n            alignment=\"LowerRight\"\r\n            outlinesize=\"1 -1\" />\r\n    <text\r\n            class=\"plusminus\"\r\n            fontSize=\"30\"\r\n            fontStyle=\"Bold\"\r\n            color=\"#000000\"></text>\r\n    <Button\r\n            class=\"spawnbutton\"\r\n            onClick=\"spawnitem()\"\r\n            tooltipPosition=\"Above\"\r\n            tooltipBackgroundColor=\"rgba(0,0,0,1)\"\r\n            preferredHeight=\"50\"\r\n            preferredWidth=\"50\"\r\n            color=\"rgba(0,0,0,0)\"\r\n            rectAlignment=\"UpperLeft\"></Button>\r\n    <Button\r\n            class=\"despawnbutton\"\r\n            onClick=\"despawnitem()\"\r\n            tooltipPosition=\"Above\"\r\n            tooltipBackgroundColor=\"rgba(0,0,0,1)\"\r\n            preferredHeight=\"50\"\r\n            preferredWidth=\"50\"\r\n            color=\"rgba(0,0,0,0)\"\r\n            rectAlignment=\"UpperLeft\"></Button>\r\n    <Button\r\n            class=\"transmutebutton\"\r\n            onClick=\"transmuteitem()\"\r\n            tooltipPosition=\"Above\"\r\n            tooltipBackgroundColor=\"rgba(0,0,0,1)\"\r\n            preferredHeight=\"50\"\r\n            preferredWidth=\"75\"\r\n            color=\"rgba(0,0,0,0)\"\r\n            rectAlignment=\"UpperLeft\"></Button>\r\n    <Cell\r\n            class=\"whiteBackground\"\r\n            color=\"White\"\r\n            dontUseTableCellBackground=\"true\"></Cell>\r\n    <Cell\r\n            class=\"pinkBackground\"\r\n            color=\"Pink\"\r\n            dontUseTableCellBackground=\"true\">\r\n    </Cell>\r\n    <Cell\r\n            class=\"orangeBackground\"\r\n            color=\"Orange\"\r\n            dontUseTableCellBackground=\"true\">\r\n    </Cell>\r\n    <Cell\r\n            class=\"yellowBackground\"\r\n            color=\"Yellow\"\r\n            dontUseTableCellBackground=\"true\">\r\n    </Cell>\r\n    <Text class=\"whitetext\" color=\"White\" fontSize=\"18\"></Text>\r\n    <image\r\n            class=\"elementimage\"\r\n            image=\"water\"\r\n            height=\"40\"\r\n            width=\"40\"\r\n            tooltipPosition=\"Above\"\r\n            tooltipBackgroundColor=\"rgba(0,0,0,1)\"\r\n            preserveAspect=\"true\">\r\n    </image>\r\n</Defaults>\r\n\r\n<TableLayout\r\n        id=\"optionsMenu1\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 430\"\r\n        height=\"40\"\r\n        width=\"340\"\r\n        rowBackgroundColor=\"rgba(0, 0.39, 0.65)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell>\r\n            <Text\r\n                    color=\"white\"\r\n                    fontSize=\"16\">Game Options</Text>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"optionsMenu2\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 40\"\r\n        height=\"390\"\r\n        width=\"340\"\r\n        cellPadding=\"24 0 12 12\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"140\">\r\n        <Cell>\r\n            <ToggleGroup>\r\n                <VerticalLayout>\r\n                    <Text\r\n                            fontStyle=\"Bold\"\r\n                            alignment=\"MiddleLeft\">Difficulty Options</Text>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"beginner\">Apprentice Wizard level (beginner level)</Toggle>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"intermediate\">Magician level (intermediate level)</Toggle>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"advanced\"\r\n                            isOn=\"True\">Archmage level (advanced level)</Toggle>\r\n                </VerticalLayout>\r\n            </ToggleGroup>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"140\">\r\n        <Cell>\r\n            <VerticalLayout>\r\n                <Text\r\n                        fontStyle=\"Bold\"\r\n                        alignment=\"MiddleLeft\">Expansions</Text>\r\n                <VerticalLayout>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"enchantedKingdom\">Enchanted Kingdom</Toggle>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"pathOfDestiny\">Path of Destiny</Toggle>\r\n                    <Toggle\r\n                            isOn=\"False\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"promos\">Promos</Toggle>\r\n                </VerticalLayout>\r\n            </VerticalLayout>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"100\">\r\n        <Cell>\r\n            <VerticalLayout>\r\n                <Text\r\n                        fontStyle=\"Bold\"\r\n                        alignment=\"MiddleLeft\">Expansion Components</Text>\r\n                <VerticalLayout>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"enchantmentCards\">Enchantment Cards</Toggle>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"specialAbilityTokens\">Special Ability Tokens</Toggle>\r\n                </VerticalLayout>\r\n            </VerticalLayout>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"10\">\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"optionsMenu3\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        height=\"40\"\r\n        width=\"340\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell>\r\n            <Button\r\n                    onClick=\"setup()\"\r\n                    color=\"Green\"\r\n                    textColor=\"white\"\r\n                    fontSize=\"16\">Setup</Button>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n\r\n<TableLayout\r\n        id=\"startPlayerMenu\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 80\"\r\n        height=\"152\"\r\n        width=\"290\"\r\n        cellPadding=\"15 15 15 15\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"115\">\r\n        <Cell>\r\n            <Text alignment=\"UpperLeft\">Everyone must finish selecting their Library II and Library III cards.\r\n\r\n                Then, select the youngest player as the starting player and click Start Tournament.</Text>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"77\">\r\n        <Cell>\r\n            <Dropdown\r\n                    id=\"StartingPlayer\"\r\n                    onValueChanged=\"startingPlayerSelected\">\r\n                <Option>White</Option>\r\n                <Option>Pink</Option>\r\n                <Option>Orange</Option>\r\n                <Option>Yellow</Option>\r\n            </Dropdown>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"startPlayerMenuButtons\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        height=\"40\"\r\n        width=\"290\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell columnSpan=\"3\">\r\n            <Button\r\n                    onClick=\"startTournament()\"\r\n                    color=\"Green\"\r\n                    textColor=\"white\"\r\n                    fontSize=\"16\">Start Tournament</Button>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n\r\n<TableLayout\r\n        active=\"false\"\r\n        id=\"gatherItemsMenu\"\r\n        rectAlignment=\"LowerRight\"\r\n        height=\"265\"\r\n        width=\"170\"\r\n        allowDragging=\"true\"\r\n        returnToOriginalPositionWhenReleased=\"false\"\r\n        automaticallyAddColumns=\"false\"\r\n        cellBackgroundColor=\"rgba(1,1,1,0.4)\"\r\n        columnWidths=\"50 40 40 40\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"25\" dontUseTableRowBackground=\"true\" color=\"rgba(0.2,0.2,0.2,0.8)\">\r\n        <Cell columnSpan=\"4\">\r\n            <Text fontStyle=\"bold\" color=\"White\">Player Aid</Text>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"40\" dontUseTableRowBackground=\"true\" color=\"rgba(0.11,0.52,1,0.95)\">\r\n        <Cell>\r\n            <image image=\"water\" class=\"elementimage\" tooltip=\"Water\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"water\" class=\"despawnbutton\" tooltip=\"Spend Water\"><Text class=\"whitetext\">-</Text></Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"water\" class=\"spawnbutton\" tooltip=\"Gain Water\"><Text class=\"whitetext\">+</Text></Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"water\" class=\"transmutebutton\" tooltip=\"Transmute Water\">\r\n                <image image=\"crystal\" class=\"elementimage\"></image>\r\n            </Button>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"40\" dontUseTableRowBackground=\"true\" color=\"rgba(0.19,0.7,0.16,0.95)\">\r\n        <Cell>\r\n            <image image=\"earth\" class=\"elementimage\" tooltip=\"Earth\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"earth\" class=\"despawnbutton\" tooltip=\"Spend Earth\"><Text class=\"whitetext\">-</Text></Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"earth\" class=\"spawnbutton\" tooltip=\"Gain Earth\"><Text class=\"whitetext\">+</Text></Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"earth\" class=\"transmutebutton\" tooltip=\"Transmute Earth\">\r\n                <image image=\"crystal\" class=\"elementimage\"></image>\r\n            </Button>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"40\" dontUseTableRowBackground=\"true\" color=\"rgba(0.9,0.9,0.16,0.95)\">\r\n        <Cell>\r\n            <image image=\"fire\" class=\"elementimage\" tooltip=\"Fire\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"fire\" class=\"despawnbutton\" tooltip=\"Spend Fire\"><Text fontSize=\"18\">-</Text></Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"fire\" class=\"spawnbutton\" tooltip=\"Gain Fire\"><Text fontSize=\"18\">+</Text></Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"fire\" class=\"transmutebutton\" tooltip=\"Transmute Fire\">\r\n                <image image=\"crystal\" class=\"elementimage\"></image>\r\n            </Button>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"40\" dontUseTableRowBackground=\"true\" color=\"rgba(0.85,0.08,0.08,0.95)\">\r\n        <Cell>\r\n            <image image=\"air\" class=\"elementimage\" tooltip=\"Air\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"air\" class=\"despawnbutton\" tooltip=\"Spend Air\"><Text class=\"whitetext\">-</Text></Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"air\" class=\"spawnbutton\" tooltip=\"Gain Air\"><Text class=\"whitetext\">+</Text></Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"air\" class=\"transmutebutton\" tooltip=\"Transmute Air\">\r\n                <image image=\"crystal\" class=\"elementimage\"></image>\r\n            </Button>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"40\" dontUseTableRowBackground=\"true\" color=\"rgba(0.8,0.8,0.8,0.95)\">\r\n        <Cell>\r\n            <image image=\"crystal\" class=\"elementimage\" tooltip=\"Crystal\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"crystal\" class=\"despawnbutton\" tooltip=\"Spend Crystal\"><Text fontSize=\"18\">-</Text></Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"crystal\" class=\"spawnbutton\" tooltip=\"Gain Crystal\"><Text fontSize=\"18\">+</Text></Button>\r\n        </Cell>\r\n    </Row>\r\n        <Row preferredHeight=\"40\" dontUseTableRowBackground=\"true\" color=\"rgba(0.6,0.6,0.6,0.95)\">\r\n        <Cell>\r\n            <image image=\"summongauge\" class=\"elementimage\" tooltip=\"Summon Gauge\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"summongauge\" class=\"despawnbutton\" tooltip=\"Decrease Summon Gauge\"><Text fontSize=\"18\">-</Text></Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button id=\"summongauge\" class=\"spawnbutton\" tooltip=\"Increase Summon Gauge\"><Text fontSize=\"18\">+</Text></Button>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n\r\n<!-- Scorepad Big -->\r\n<Panel\r\n        id=\"ScorepadMenu\"\r\n        height=\"360\"\r\n        width=\"525\"\r\n        rectAlignment=\"Center\"\r\n        allowDragging=\"true\"\r\n        returnToOriginalPositionWhenReleased=\"false\"\r\n        outline=\"#000000\"\r\n        padding=\"2,2,2,2\"\r\n        outlineSize=\"1 -1\"\r\n        color=\"rgb(0.95,0.95,0.95)\"\r\n        active=\"false\">\r\n    <TableLayout\r\n            cellPadding=\"5,5,5,5\"\r\n            cellSpacing=\"2\"\r\n            columnWidths=\"225, 75, 75, 75, 75\"\r\n            cellBackgroundColor=\"rgba(1,1,1,0.8)\">\r\n        <Row>\r\n            <Cell\r\n                    columnSpan=\"5\"\r\n                    color=\"rgb(0, 0.39, 0.65)\"\r\n                    dontUseTableCellBackground=\"true\">\r\n                <Text\r\n                        fontStyle=\"bold\"\r\n                        color=\"White\"\r\n                        fontSize=\"18\">Score Pad</Text>\r\n            </Cell>\r\n        </Row>\r\n        <Row>\r\n            <Cell dontUseTableCellBackground=\"true\"></Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <Text>White</Text>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <Text>Pink</Text>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <Text>Orange</Text>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <Text>Yellow</Text>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Card Prestige</b>: Gain prestige value of every card in your tableau.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"prestige-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"prestige-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"prestige-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"prestige-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>End of Game</b>: Gain/Lose Prestige for any end of game effects.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"endofgame-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"endofgame-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"endofgame-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"endofgame-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Crystals</b>: Gain prestige for all remaining crystals.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"crystals-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"crystals-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"crystals-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"crystals-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Unplayed Cards</b>: Lose 5 Prestige for every card left in your hand.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"unplayed-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"unplayed-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"unplayed-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"unplayed-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Bonus Track</b>: Lose Prestige for your bonus track use.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"bonus-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"bonus-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"bonus-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"bonus-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell alignment=\"UpperLeft\">\r\n                <Text fontStyle=\"bold\">Total</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"total-White\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"total-Pink\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"total-Orange\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"total-Yellow\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n    </TableLayout>\r\n</Panel>",
+  "XmlUI": "<Defaults>\r\n    <Panel\r\n            class=\"score\"\r\n            height=\"50\"\r\n            width=\"50\"\r\n            rectAlignment=\"UpperLeft\" />\r\n    <Panel\r\n            class=\"itemannouncePanel\"\r\n            active=\"false\"\r\n            rectAlignment=\"LowerRight\"\r\n            showAnimation=\"FadeIn\"\r\n            hideAnimation=\"FadeOut\"\r\n            animationDuration=\"0.6\"\r\n            hideAnimationDelay=\"0.5\"\r\n            height=\"100\"\r\n            width=\"300\" />\r\n    <Text\r\n            class=\"itemannounceText\"\r\n            fontSize=\"25\"\r\n            color=\"#FFFFFF\"\r\n            fontstyle=\"Bold\"\r\n            outline=\"#000000\"\r\n            alignment=\"LowerRight\"\r\n            outlinesize=\"1 -1\" />\r\n    <text\r\n            class=\"plusminus\"\r\n            fontSize=\"30\"\r\n            fontStyle=\"Bold\"\r\n            color=\"#000000\"></text>\r\n    <Button\r\n            class=\"spawnbutton\"\r\n            onClick=\"spawnitem()\"\r\n            tooltipPosition=\"Above\"\r\n            tooltipBackgroundColor=\"rgba(0,0,0,1)\"\r\n            preferredHeight=\"50\"\r\n            preferredWidth=\"50\"\r\n            color=\"rgba(0,0,0,0)\"\r\n            rectAlignment=\"UpperLeft\"></Button>\r\n    <Button\r\n            class=\"despawnbutton\"\r\n            onClick=\"despawnitem()\"\r\n            tooltipPosition=\"Above\"\r\n            tooltipBackgroundColor=\"rgba(0,0,0,1)\"\r\n            preferredHeight=\"50\"\r\n            preferredWidth=\"50\"\r\n            color=\"rgba(0,0,0,0)\"\r\n            rectAlignment=\"UpperLeft\"></Button>\r\n    <Button\r\n            class=\"transmutebutton\"\r\n            onClick=\"transmuteitem()\"\r\n            tooltipPosition=\"Above\"\r\n            tooltipBackgroundColor=\"rgba(0,0,0,1)\"\r\n            preferredHeight=\"50\"\r\n            preferredWidth=\"75\"\r\n            color=\"rgba(0,0,0,0)\"\r\n            rectAlignment=\"UpperLeft\"></Button>\r\n    <Cell\r\n            class=\"whiteBackground\"\r\n            color=\"White\"\r\n            dontUseTableCellBackground=\"true\"></Cell>\r\n    <Cell\r\n            class=\"pinkBackground\"\r\n            color=\"Pink\"\r\n            dontUseTableCellBackground=\"true\">\r\n    </Cell>\r\n    <Cell\r\n            class=\"orangeBackground\"\r\n            color=\"Orange\"\r\n            dontUseTableCellBackground=\"true\">\r\n    </Cell>\r\n    <Cell\r\n            class=\"yellowBackground\"\r\n            color=\"Yellow\"\r\n            dontUseTableCellBackground=\"true\">\r\n    </Cell>\r\n    <Text\r\n            class=\"whitetext\"\r\n            color=\"White\"\r\n            fontSize=\"18\"></Text>\r\n    <image\r\n            class=\"elementimage\"\r\n            height=\"40\"\r\n            width=\"40\"\r\n            tooltipPosition=\"Above\"\r\n            tooltipBackgroundColor=\"rgba(0,0,0,1)\"\r\n            preserveAspect=\"true\">\r\n    </image>\r\n    <image\r\n            class=\"transmuteimage\"\r\n            image=\"transmute\"\r\n            height=\"30\"\r\n            width=\"30\"\r\n            tooltipPosition=\"Above\"\r\n            tooltipBackgroundColor=\"rgba(0,0,0,1)\"\r\n            preserveAspect=\"true\">\r\n    </image>\r\n</Defaults>\r\n\r\n<TableLayout\r\n        id=\"optionsMenu1\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 430\"\r\n        height=\"40\"\r\n        width=\"340\"\r\n        rowBackgroundColor=\"rgba(0, 0.39, 0.65)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell>\r\n            <Text\r\n                    color=\"white\"\r\n                    fontSize=\"16\">Game Options</Text>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"optionsMenu2\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 40\"\r\n        height=\"390\"\r\n        width=\"340\"\r\n        cellPadding=\"24 0 12 12\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"140\">\r\n        <Cell>\r\n            <ToggleGroup>\r\n                <VerticalLayout>\r\n                    <Text\r\n                            fontStyle=\"Bold\"\r\n                            alignment=\"MiddleLeft\">Difficulty Options</Text>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"beginner\">Apprentice Wizard level (beginner level)</Toggle>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"intermediate\">Magician level (intermediate level)</Toggle>\r\n                    <Toggle\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"advanced\"\r\n                            isOn=\"True\">Archmage level (advanced level)</Toggle>\r\n                </VerticalLayout>\r\n            </ToggleGroup>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"140\">\r\n        <Cell>\r\n            <VerticalLayout>\r\n                <Text\r\n                        fontStyle=\"Bold\"\r\n                        alignment=\"MiddleLeft\">Expansions</Text>\r\n                <VerticalLayout>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"enchantedKingdom\">Enchanted Kingdom</Toggle>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"pathOfDestiny\">Path of Destiny</Toggle>\r\n                    <Toggle\r\n                            isOn=\"False\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"promos\">Promos</Toggle>\r\n                </VerticalLayout>\r\n            </VerticalLayout>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"100\">\r\n        <Cell>\r\n            <VerticalLayout>\r\n                <Text\r\n                        fontStyle=\"Bold\"\r\n                        alignment=\"MiddleLeft\">Expansion Components</Text>\r\n                <VerticalLayout>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"enchantmentCards\">Enchantment Cards</Toggle>\r\n                    <Toggle\r\n                            isOn=\"True\"\r\n                            onValueChanged=\"uiToggle\"\r\n                            id=\"specialAbilityTokens\">Special Ability Tokens</Toggle>\r\n                </VerticalLayout>\r\n            </VerticalLayout>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"10\">\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"optionsMenu3\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        height=\"40\"\r\n        width=\"340\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell>\r\n            <Button\r\n                    onClick=\"setup()\"\r\n                    color=\"Green\"\r\n                    textColor=\"white\"\r\n                    fontSize=\"16\">Setup</Button>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n\r\n<TableLayout\r\n        id=\"startPlayerMenu\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        offsetXY=\"0 80\"\r\n        height=\"152\"\r\n        width=\"290\"\r\n        cellPadding=\"15 15 15 15\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"115\">\r\n        <Cell>\r\n            <Text alignment=\"UpperLeft\">Everyone must finish selecting their Library II and Library III cards.\r\n\r\n                Then, select the youngest player as the starting player and click Start Tournament.</Text>\r\n        </Cell>\r\n    </Row>\r\n    <Row preferredHeight=\"77\">\r\n        <Cell>\r\n            <Dropdown\r\n                    id=\"StartingPlayer\"\r\n                    onValueChanged=\"startingPlayerSelected\">\r\n                <Option>White</Option>\r\n                <Option>Pink</Option>\r\n                <Option>Orange</Option>\r\n                <Option>Yellow</Option>\r\n            </Dropdown>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n<TableLayout\r\n        id=\"startPlayerMenuButtons\"\r\n        active=\"false\"\r\n        rectAlignment=\"LowerRight\"\r\n        height=\"40\"\r\n        width=\"290\"\r\n        cellBackgroundColor=\"clear\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row preferredHeight=\"40\">\r\n        <Cell columnSpan=\"3\">\r\n            <Button\r\n                    onClick=\"startTournament()\"\r\n                    color=\"Green\"\r\n                    textColor=\"white\"\r\n                    fontSize=\"16\">Start Tournament</Button>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n\r\n<TableLayout\r\n        active=\"false\"\r\n        id=\"gatherItemsMenu\"\r\n        rectAlignment=\"LowerRight\"\r\n        height=\"265\"\r\n        width=\"170\"\r\n        allowDragging=\"true\"\r\n        returnToOriginalPositionWhenReleased=\"false\"\r\n        automaticallyAddColumns=\"false\"\r\n        cellBackgroundColor=\"rgba(1,1,1,0.4)\"\r\n        columnWidths=\"50 40 40 40\"\r\n        rowBackgroundColor=\"rgba(1, 1, 1, 0.85)\">\r\n    <Row\r\n            preferredHeight=\"25\"\r\n            dontUseTableRowBackground=\"true\"\r\n            color=\"rgba(0.2,0.2,0.2,0.8)\">\r\n        <Cell columnSpan=\"4\">\r\n            <Text\r\n                    fontStyle=\"bold\"\r\n                    color=\"White\">Player Aid</Text>\r\n        </Cell>\r\n    </Row>\r\n    <Row\r\n            preferredHeight=\"40\"\r\n            dontUseTableRowBackground=\"true\"\r\n            color=\"rgba(0.11,0.52,1,0.95)\">\r\n        <Cell>\r\n            <image\r\n                    image=\"water\"\r\n                    class=\"elementimage\"\r\n                    tooltip=\"Water\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"water\"\r\n                    class=\"despawnbutton\"\r\n                    tooltip=\"Spend Water\">\r\n                <Text class=\"whitetext\">-</Text>\r\n            </Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"water\"\r\n                    class=\"spawnbutton\"\r\n                    tooltip=\"Gain Water\">\r\n                <Text class=\"whitetext\">+</Text>\r\n            </Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"water\"\r\n                    class=\"transmutebutton\"\r\n                    tooltip=\"Transmute Water\">\r\n                <image class=\"transmuteimage\"></image>\r\n            </Button>\r\n        </Cell>\r\n    </Row>\r\n    <Row\r\n            preferredHeight=\"40\"\r\n            dontUseTableRowBackground=\"true\"\r\n            color=\"rgba(0.19,0.7,0.16,0.95)\">\r\n        <Cell>\r\n            <image\r\n                    image=\"earth\"\r\n                    class=\"elementimage\"\r\n                    tooltip=\"Earth\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"earth\"\r\n                    class=\"despawnbutton\"\r\n                    tooltip=\"Spend Earth\">\r\n                <Text class=\"whitetext\">-</Text>\r\n            </Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"earth\"\r\n                    class=\"spawnbutton\"\r\n                    tooltip=\"Gain Earth\">\r\n                <Text class=\"whitetext\">+</Text>\r\n            </Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"earth\"\r\n                    class=\"transmutebutton\"\r\n                    tooltip=\"Transmute Earth\">\r\n                <image class=\"transmuteimage\"></image>\r\n            </Button>\r\n        </Cell>\r\n    </Row>\r\n    <Row\r\n            preferredHeight=\"40\"\r\n            dontUseTableRowBackground=\"true\"\r\n            color=\"rgba(0.9,0.9,0.16,0.95)\">\r\n        <Cell>\r\n            <image\r\n                    image=\"fire\"\r\n                    class=\"elementimage\"\r\n                    tooltip=\"Fire\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"fire\"\r\n                    class=\"despawnbutton\"\r\n                    tooltip=\"Spend Fire\">\r\n                <Text fontSize=\"18\">-</Text>\r\n            </Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"fire\"\r\n                    class=\"spawnbutton\"\r\n                    tooltip=\"Gain Fire\">\r\n                <Text fontSize=\"18\">+</Text>\r\n            </Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"fire\"\r\n                    class=\"transmutebutton\"\r\n                    tooltip=\"Transmute Fire\">\r\n                <image class=\"transmuteimage\"></image>\r\n            </Button>\r\n        </Cell>\r\n    </Row>\r\n    <Row\r\n            preferredHeight=\"40\"\r\n            dontUseTableRowBackground=\"true\"\r\n            color=\"rgba(0.85,0.08,0.08,0.95)\">\r\n        <Cell>\r\n            <image\r\n                    image=\"air\"\r\n                    class=\"elementimage\"\r\n                    tooltip=\"Air\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"air\"\r\n                    class=\"despawnbutton\"\r\n                    tooltip=\"Spend Air\">\r\n                <Text class=\"whitetext\">-</Text>\r\n            </Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"air\"\r\n                    class=\"spawnbutton\"\r\n                    tooltip=\"Gain Air\">\r\n                <Text class=\"whitetext\">+</Text>\r\n            </Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"air\"\r\n                    class=\"transmutebutton\"\r\n                    tooltip=\"Transmute Air\">\r\n                <image class=\"transmuteimage\"></image>\r\n            </Button>\r\n        </Cell>\r\n    </Row>\r\n    <Row\r\n            preferredHeight=\"40\"\r\n            dontUseTableRowBackground=\"true\"\r\n            color=\"rgba(0.8,0.8,0.8,0.95)\">\r\n        <Cell>\r\n            <image\r\n                    image=\"crystal\"\r\n                    class=\"elementimage\"\r\n                    tooltip=\"Crystal\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"crystal\"\r\n                    class=\"despawnbutton\"\r\n                    tooltip=\"Spend Crystal\">\r\n                <Text fontSize=\"18\">-</Text>\r\n            </Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"crystal\"\r\n                    class=\"spawnbutton\"\r\n                    tooltip=\"Gain Crystal\">\r\n                <Text fontSize=\"18\">+</Text>\r\n            </Button>\r\n        </Cell>\r\n    </Row>\r\n    <Row\r\n            preferredHeight=\"40\"\r\n            dontUseTableRowBackground=\"true\"\r\n            color=\"rgba(0.6,0.6,0.6,0.95)\">\r\n        <Cell>\r\n            <image\r\n                    image=\"summongauge\"\r\n                    class=\"elementimage\"\r\n                    tooltip=\"Summon Gauge\"></image>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"summongauge\"\r\n                    class=\"despawnbutton\"\r\n                    tooltip=\"Decrease Summon Gauge\">\r\n                <Text fontSize=\"18\">-</Text>\r\n            </Button>\r\n        </Cell>\r\n        <Cell>\r\n            <Button\r\n                    id=\"summongauge\"\r\n                    class=\"spawnbutton\"\r\n                    tooltip=\"Increase Summon Gauge\">\r\n                <Text fontSize=\"18\">+</Text>\r\n            </Button>\r\n        </Cell>\r\n    </Row>\r\n</TableLayout>\r\n\r\n<!-- Scorepad Big -->\r\n<Panel\r\n        id=\"ScorepadMenu\"\r\n        height=\"360\"\r\n        width=\"525\"\r\n        rectAlignment=\"Center\"\r\n        allowDragging=\"true\"\r\n        returnToOriginalPositionWhenReleased=\"false\"\r\n        outline=\"#000000\"\r\n        padding=\"2,2,2,2\"\r\n        outlineSize=\"1 -1\"\r\n        color=\"rgb(0.95,0.95,0.95)\"\r\n        active=\"false\">\r\n    <TableLayout\r\n            cellPadding=\"5,5,5,5\"\r\n            cellSpacing=\"2\"\r\n            columnWidths=\"225, 75, 75, 75, 75\"\r\n            cellBackgroundColor=\"rgba(1,1,1,0.8)\">\r\n        <Row>\r\n            <Cell\r\n                    columnSpan=\"5\"\r\n                    color=\"rgb(0, 0.39, 0.65)\"\r\n                    dontUseTableCellBackground=\"true\">\r\n                <Text\r\n                        fontStyle=\"bold\"\r\n                        color=\"White\"\r\n                        fontSize=\"18\">Score Pad</Text>\r\n            </Cell>\r\n        </Row>\r\n        <Row>\r\n            <Cell dontUseTableCellBackground=\"true\"></Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <Text>White</Text>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <Text>Pink</Text>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <Text>Orange</Text>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <Text>Yellow</Text>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Card Prestige</b>: Gain prestige value of every card in your tableau.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"prestige-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"prestige-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"prestige-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"prestige-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>End of Game</b>: Gain/Lose Prestige for any end of game effects.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"endofgame-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"endofgame-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"endofgame-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"endofgame-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Crystals</b>: Gain prestige for all remaining crystals.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"crystals-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"crystals-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"crystals-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"crystals-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Unplayed Cards</b>: Lose 5 Prestige for every card left in your hand.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"unplayed-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"unplayed-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"unplayed-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"unplayed-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell>\r\n                <Text alignment=\"MiddleLeft\"><b>Bonus Track</b>: Lose Prestige for your bonus track use.</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"bonus-White\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"bonus-Pink\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"bonus-Orange\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"bonus-Yellow\"\r\n                        onValueChanged=\"scoreChange\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n\r\n        <Row>\r\n            <Cell alignment=\"UpperLeft\">\r\n                <Text fontStyle=\"bold\">Total</Text>\r\n            </Cell>\r\n            <Cell class=\"whiteBackground\">\r\n                <InputField\r\n                        id=\"total-White\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"pinkBackground\">\r\n                <InputField\r\n                        id=\"total-Pink\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"orangeBackground\">\r\n                <InputField\r\n                        id=\"total-Orange\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n            <Cell class=\"yellowBackground\">\r\n                <InputField\r\n                        id=\"total-Yellow\"\r\n                        fontStyle=\"bold\">0</InputField>\r\n            </Cell>\r\n        </Row>\r\n    </TableLayout>\r\n</Panel>",
   "CustomUIAssets": [
     {
       "Type": 0,
@@ -439,6 +439,11 @@
       "Type": 0,
       "Name": "crystal",
       "URL": "http://cloud-3.steamusercontent.com/ugc/2106052744141530574/0C71A8EF25332C725F26487045FC85A6189C7C9D/"
+    },
+    {
+      "Type": 0,
+      "Name": "transmute",
+      "URL": "http://cloud-3.steamusercontent.com/ugc/2106052996914986379/8BB41741C5F85E00558A5CA473C7ED8BCD72B7B1/"
     }
   ],
   "SnapPoints": [
@@ -618,7 +623,7 @@
       "Rotation": {
         "x": 1.11426509E-07,
         "y": 180.021729,
-        "z": -4.59497258E-08
+        "z": -4.59497365E-08
       }
     },
     {
@@ -962,9 +967,9 @@
         "z": -15.9098186
       },
       "Rotation": {
-        "x": 2.82154888E-05,
+        "x": 2.82155E-05,
         "y": 180.021484,
-        "z": -0.000183528769
+        "z": -0.000183528813
       }
     },
     {
@@ -1016,7 +1021,7 @@
       "Rotation": {
         "x": -0.000176037371,
         "y": 179.963638,
-        "z": -0.000232180522
+        "z": -0.00023218045
       },
       "Tags": [
         "water",
@@ -1094,7 +1099,7 @@
         "z": -14.4003315
       },
       "Rotation": {
-        "x": -1.52414486E-06,
+        "x": -1.5241452E-06,
         "y": 179.9696,
         "z": -2.14577062E-06
       },
@@ -1201,7 +1206,7 @@
         "z": -6.640216
       },
       "Rotation": {
-        "x": -1.18257759E-07,
+        "x": -1.18257795E-07,
         "y": 180.021912,
         "z": -1.40597521E-07
       }
@@ -2644,7 +2649,7 @@
         "z": -6.496402
       },
       "Rotation": {
-        "x": -2.30046453E-08,
+        "x": -2.300465E-08,
         "y": 180.0223,
         "z": -1.10506214E-07
       }
@@ -2658,7 +2663,7 @@
       "Rotation": {
         "x": -6.065459E-09,
         "y": 180.0223,
-        "z": -9.825486E-08
+        "z": -9.825488E-08
       }
     },
     {
@@ -2670,7 +2675,7 @@
       "Rotation": {
         "x": 3.49847475E-08,
         "y": 180.0223,
-        "z": -5.80848756E-08
+        "z": -5.80848933E-08
       }
     },
     {
@@ -5428,11 +5433,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": 21.2872658,
-        "posY": 0.924506545,
+        "posY": 0.9245064,
         "posZ": -12.5990629,
-        "rotX": 4.577626E-06,
+        "rotX": 5.16129649E-06,
         "rotY": 180.000381,
-        "rotZ": -3.16098362E-06,
+        "rotZ": -5.276645E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -5446,9 +5451,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178375542,
-        "g": 0.185074747,
-        "b": 0.238667876
+        "r": 0.178375453,
+        "g": 0.185074657,
+        "b": 0.238667786
       },
       "Tags": [
         "ii",
@@ -5499,11 +5504,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": 24.4938641,
-        "posY": 0.924506366,
+        "posY": 0.9245064,
         "posZ": -12.5937443,
-        "rotX": -3.07130585E-06,
+        "rotX": -2.74737477E-06,
         "rotY": 180.000061,
-        "rotZ": -1.36281062E-06,
+        "rotZ": -1.6746759E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -5517,9 +5522,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178375542,
-        "g": 0.185074747,
-        "b": 0.238667876
+        "r": 0.178375453,
+        "g": 0.185074657,
+        "b": 0.238667786
       },
       "Tags": [
         "iii",
@@ -5655,7 +5660,7 @@
           "Rotation": {
             "x": 0.000183885582,
             "y": 179.989426,
-            "z": -0.000185142431
+            "z": -0.000185142475
           }
         },
         {
@@ -5811,9 +5816,9 @@
         "posX": -2.531734,
         "posY": 1.199653,
         "posZ": 4.338665,
-        "rotX": -9.774311E-07,
+        "rotX": 5.856675E-07,
         "rotY": 16.2010479,
-        "rotZ": -8.00789053E-07,
+        "rotZ": -1.64502922E-06,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -5827,9 +5832,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.22821486,
-        "g": 0.22821486,
-        "b": 0.22821486
+        "r": 0.228214741,
+        "g": 0.228214741,
+        "b": 0.228214741
       },
       "Tags": [
         "round marker"
@@ -5877,7 +5882,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -5947,7 +5952,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.38310048
+        "b": 0.3831004
       },
       "Tags": [
         "destiny"
@@ -6017,7 +6022,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -6087,7 +6092,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -6155,9 +6160,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.344943732,
-        "g": 0.344943732,
-        "b": 0.344943732,
+        "r": 0.344943643,
+        "g": 0.344943643,
+        "b": 0.344943643,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -6288,9 +6293,9 @@
             "z": -0.217036173
           },
           "Rotation": {
-            "x": 0.0002261853,
+            "x": 0.000226185381,
             "y": 359.973236,
-            "z": -0.000216151238
+            "z": -0.000216151282
           },
           "Tags": [
             "summon gauge"
@@ -6303,7 +6308,7 @@
             "z": -0.3286066
           },
           "Rotation": {
-            "x": 0.00020661435,
+            "x": 0.0002066144,
             "y": 359.97464,
             "z": -0.000190404389
           },
@@ -6320,7 +6325,7 @@
           "Rotation": {
             "x": 0.00020607152,
             "y": 359.9751,
-            "z": -0.000190923412
+            "z": -0.000190923456
           },
           "Tags": [
             "summon gauge"
@@ -6335,7 +6340,7 @@
           "Rotation": {
             "x": 0.000196180059,
             "y": 359.5958,
-            "z": -0.000180919975
+            "z": -0.000180920018
           },
           "Tags": [
             "summon gauge"
@@ -6348,7 +6353,7 @@
             "z": -0.546610236
           },
           "Rotation": {
-            "x": 0.000197548987,
+            "x": 0.00019754903,
             "y": 359.969238,
             "z": -0.000184403834
           },
@@ -6380,7 +6385,7 @@
           "Rotation": {
             "x": 0.000220511822,
             "y": 359.974365,
-            "z": -0.000217425462
+            "z": -0.0002174255
           },
           "Tags": [
             "bonus track"
@@ -6393,9 +6398,9 @@
             "z": -0.216525152
           },
           "Rotation": {
-            "x": 0.000238928726,
+            "x": 0.0002389288,
             "y": 359.975342,
-            "z": -0.0002184857
+            "z": -0.000218485744
           },
           "Tags": [
             "bonus track"
@@ -6408,9 +6413,9 @@
             "z": -0.64711
           },
           "Rotation": {
-            "x": 0.000218142261,
-            "y": 0.0304720383,
-            "z": -0.000225105076
+            "x": 0.0002181423,
+            "y": 0.03047205,
+            "z": -0.000225105
           },
           "Tags": [
             "summon gauge"
@@ -6425,7 +6430,7 @@
           "Rotation": {
             "x": 0.000224521733,
             "y": 359.9751,
-            "z": -0.000218213085
+            "z": -0.000218213128
           },
           "Tags": [
             "bonus track"
@@ -6440,7 +6445,7 @@
           "Rotation": {
             "x": 0.00023722506,
             "y": 359.9731,
-            "z": -0.000216026674
+            "z": -0.000216026718
           },
           "Tags": [
             "bonus track"
@@ -6453,9 +6458,9 @@
             "z": -0.6977042
           },
           "Rotation": {
-            "x": 0.00021547862,
+            "x": 0.000215478663,
             "y": 359.97406,
-            "z": -0.00021709119
+            "z": -0.000217091234
           },
           "Tags": [
             "summon gauge"
@@ -6483,7 +6488,7 @@
             "z": -0.726439059
           },
           "Rotation": {
-            "x": 0.000225875425,
+            "x": 0.0002258755,
             "y": 0.01903512,
             "z": -0.000239716188
           },
@@ -6515,7 +6520,7 @@
           "Rotation": {
             "x": 0.000253165839,
             "y": 359.972321,
-            "z": -0.000242468464
+            "z": -0.000242468537
           },
           "Tags": [
             "summon gauge"
@@ -6528,9 +6533,9 @@
             "z": -0.547135532
           },
           "Rotation": {
-            "x": 0.000198804788,
+            "x": 0.000198804832,
             "y": 359.9706,
-            "z": -0.000185918674
+            "z": -0.000185918587
           },
           "Tags": [
             "summon gauge"
@@ -6558,7 +6563,7 @@
             "z": -0.7318672
           },
           "Rotation": {
-            "x": 0.0002185412,
+            "x": 0.000218541274,
             "y": 359.969666,
             "z": -0.000239533168
           },
@@ -7059,9 +7064,9 @@
             "z": -0.302327424
           },
           "Rotation": {
-            "x": 0.000230844627,
+            "x": 0.000230844555,
             "y": 179.962234,
-            "z": -0.000223438823
+            "z": -0.00022343875
           },
           "Tags": [
             "summon gauge"
@@ -7074,7 +7079,7 @@
             "z": -0.374846429
           },
           "Rotation": {
-            "x": 0.000203479533,
+            "x": 0.000203479576,
             "y": 180.02507,
             "z": -0.000183997065
           },
@@ -7119,7 +7124,7 @@
             "z": -0.177266046
           },
           "Rotation": {
-            "x": 0.000236178661,
+            "x": 0.000236178574,
             "y": 179.962234,
             "z": -0.000168798142
           },
@@ -7151,7 +7156,7 @@
           "Rotation": {
             "x": 9.71043555E-05,
             "y": 179.961578,
-            "z": -5.878141E-05
+            "z": -5.878139E-05
           },
           "Tags": [
             "summon gauge"
@@ -7164,7 +7169,7 @@
             "z": -0.188486382
           },
           "Rotation": {
-            "x": 0.00023233259,
+            "x": 0.0002323325,
             "y": 179.960571,
             "z": -0.000166945872
           },
@@ -7224,7 +7229,7 @@
             "z": -0.153233483
           },
           "Rotation": {
-            "x": 0.000224487259,
+            "x": 0.000224487187,
             "y": 179.9604,
             "z": -0.000166763552
           },
@@ -7241,7 +7246,7 @@
           "Rotation": {
             "x": 9.821721E-05,
             "y": 179.959808,
-            "z": -5.68089526E-05
+            "z": -5.68089345E-05
           },
           "Tags": [
             "summon gauge"
@@ -7271,7 +7276,7 @@
           "Rotation": {
             "x": 0.000203584845,
             "y": 179.960846,
-            "z": -0.000221878174
+            "z": -0.0002218781
           },
           "Tags": [
             "summon gauge"
@@ -7299,7 +7304,7 @@
             "z": -0.5594198
           },
           "Rotation": {
-            "x": 0.000236338921,
+            "x": 0.000236338848,
             "y": 179.959961,
             "z": -0.000166281636
           },
@@ -7407,9 +7412,9 @@
             "z": -0.109770417
           },
           "Rotation": {
-            "x": 0.000201316565,
+            "x": 0.000201316609,
             "y": 179.97464,
-            "z": -0.000195235174
+            "z": -0.000195235218
           },
           "Tags": [
             "summon gauge"
@@ -7439,7 +7444,7 @@
           "Rotation": {
             "x": 0.000201818242,
             "y": 179.9744,
-            "z": -0.000194962253
+            "z": -0.0001949623
           },
           "Tags": [
             "summon gauge"
@@ -7452,7 +7457,7 @@
             "z": -0.4006478
           },
           "Rotation": {
-            "x": 0.0002040446,
+            "x": 0.000204044642,
             "y": 179.976822,
             "z": -0.0001976632
           },
@@ -7482,7 +7487,7 @@
             "z": -0.5330553
           },
           "Rotation": {
-            "x": 0.0002041513,
+            "x": 0.000204151351,
             "y": 179.970276,
             "z": -0.000217698558
           },
@@ -7527,7 +7532,7 @@
             "z": -0.6905278
           },
           "Rotation": {
-            "x": 0.000209473365,
+            "x": 0.000209473408,
             "y": 179.974472,
             "z": -0.00022236802
           },
@@ -7557,7 +7562,7 @@
             "z": -0.7128147
           },
           "Rotation": {
-            "x": 0.00023126787,
+            "x": 0.000231267943,
             "y": 179.974564,
             "z": -0.000222459421
           },
@@ -7572,7 +7577,7 @@
             "z": -0.7306092
           },
           "Rotation": {
-            "x": 0.0002088982,
+            "x": 0.000208898244,
             "y": 179.974228,
             "z": -0.000249417761
           },
@@ -7587,7 +7592,7 @@
             "z": -0.718739152
           },
           "Rotation": {
-            "x": 0.000216709712,
+            "x": 0.000216709755,
             "y": 179.974579,
             "z": -0.000249810255
           },
@@ -7602,7 +7607,7 @@
             "z": -0.694881
           },
           "Rotation": {
-            "x": 0.000220072645,
+            "x": 0.000220072718,
             "y": 179.973953,
             "z": -0.000221791081
           },
@@ -7617,7 +7622,7 @@
             "z": -0.6447028
           },
           "Rotation": {
-            "x": 0.000189240891,
+            "x": 0.000189240935,
             "y": 179.976639,
             "z": -0.000279409869
           },
@@ -7647,7 +7652,7 @@
             "z": -0.206751809
           },
           "Rotation": {
-            "x": 0.000200788709,
+            "x": 0.000200788752,
             "y": 179.970383,
             "z": -0.0001904968
           },
@@ -7677,9 +7682,9 @@
             "z": -0.234791979
           },
           "Rotation": {
-            "x": 0.000203447,
+            "x": 0.000203447038,
             "y": 179.976608,
-            "z": -0.0001974133
+            "z": -0.000197413348
           },
           "Tags": [
             "bonus track"
@@ -7692,9 +7697,9 @@
             "z": -0.195362017
           },
           "Rotation": {
-            "x": 0.000203751886,
+            "x": 0.00020375193,
             "y": 179.9739,
-            "z": -0.000194409964
+            "z": -0.000194410008
           },
           "Tags": [
             "bonus track"
@@ -7709,9 +7714,9 @@
         "posX": -4.21983433,
         "posY": 1.19950664,
         "posZ": 0.621655,
-        "rotX": -2.6075395E-07,
-        "rotY": 0.019277,
-        "rotZ": -2.206324E-06,
+        "rotX": -3.03544539E-07,
+        "rotY": 0.0192908347,
+        "rotZ": -3.408044E-07,
         "scaleX": 0.350000441,
         "scaleY": 0.350000441,
         "scaleZ": 0.350000441
@@ -7725,9 +7730,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.2282148,
-        "g": 0.2282148,
-        "b": 0.2282148
+        "r": 0.228214711,
+        "g": 0.228214711,
+        "b": 0.228214711
       },
       "Tags": [
         "year marker"
@@ -8891,9 +8896,9 @@
         "posX": 30.7106419,
         "posY": 0.910906434,
         "posZ": -13.8427315,
-        "rotX": -8.2807E-08,
-        "rotY": 0.0001115077,
-        "rotZ": 5.30968123E-08,
+        "rotX": -5.00518773E-08,
+        "rotY": 0.00011151129,
+        "rotZ": -4.97971E-08,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -8998,11 +9003,11 @@
       "Name": "Infinite_Bag",
       "Transform": {
         "posX": 32.58614,
-        "posY": 0.9109065,
+        "posY": 0.910906434,
         "posZ": -13.8427315,
-        "rotX": 6.31853752E-08,
-        "rotY": 0.000128730971,
-        "rotZ": -5.513704E-09,
+        "rotX": -3.4412804E-07,
+        "rotY": 0.000128735745,
+        "rotZ": 1.28783668E-07,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -9109,9 +9114,9 @@
         "posX": 34.4621124,
         "posY": 0.9109064,
         "posZ": -13.8427315,
-        "rotX": 6.92477258E-08,
-        "rotY": 0.000193296131,
-        "rotZ": -3.03936822E-08,
+        "rotX": -1.91675E-08,
+        "rotY": 0.000193300133,
+        "rotZ": 5.71612873E-08,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -9218,9 +9223,9 @@
         "posX": 36.3019562,
         "posY": 0.910906434,
         "posZ": -13.8427315,
-        "rotX": -3.92576354E-08,
-        "rotY": 0.000151503729,
-        "rotZ": 9.51726253E-09,
+        "rotX": -1.14676631E-07,
+        "rotY": 0.000151494009,
+        "rotZ": -6.376358E-08,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -9327,9 +9332,9 @@
         "posX": 28.8855782,
         "posY": 0.910906434,
         "posZ": -13.8427315,
-        "rotX": 5.813555E-08,
-        "rotY": 0.0003102561,
-        "rotZ": -1.07634932E-07,
+        "rotX": -8.20398753E-08,
+        "rotY": 0.000310268573,
+        "rotZ": 4.196603E-08,
         "scaleX": 0.8000002,
         "scaleY": 0.8000002,
         "scaleZ": 0.8000002
@@ -9587,11 +9592,11 @@
       "Name": "Deck",
       "Transform": {
         "posX": 35.752388,
-        "posY": 0.993577361,
+        "posY": 0.9935775,
         "posZ": -6.64027739,
-        "rotX": -8.168636E-08,
+        "rotX": -6.866948E-08,
         "rotY": 180.0223,
-        "rotZ": 1.90539129E-06,
+        "rotZ": 1.093614E-07,
         "scaleX": 1.25,
         "scaleY": 1.0,
         "scaleZ": 1.25
@@ -10271,11 +10276,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": -9.892814,
-        "posY": 0.9245067,
+        "posY": 0.9245068,
         "posZ": -12.6009579,
-        "rotX": 1.60806883E-06,
+        "rotX": 1.64850667E-06,
         "rotY": 180.02684,
-        "rotZ": 3.94013142E-08,
+        "rotZ": 9.231303E-08,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -10289,9 +10294,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178375542,
-        "g": 0.185074747,
-        "b": 0.238667876
+        "r": 0.178375453,
+        "g": 0.185074657,
+        "b": 0.238667786
       },
       "Tags": [
         "ii",
@@ -10344,9 +10349,9 @@
         "posX": -28.2342548,
         "posY": 0.9245064,
         "posZ": 13.5741577,
-        "rotX": 1.13096246E-06,
+        "rotX": 1.0501858E-06,
         "rotY": 359.975739,
-        "rotZ": -3.940278E-07,
+        "rotZ": -5.019057E-07,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -10360,9 +10365,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178375542,
-        "g": 0.185074747,
-        "b": 0.238667876
+        "r": 0.178375453,
+        "g": 0.185074657,
+        "b": 0.238667786
       },
       "Tags": [
         "ii",
@@ -10413,11 +10418,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": -6.867074,
-        "posY": 0.924506366,
+        "posY": 0.924506545,
         "posZ": -12.6006851,
-        "rotX": -5.15280647E-07,
+        "rotX": -7.673785E-07,
         "rotY": 180.009186,
-        "rotZ": -1.43730881E-06,
+        "rotZ": -1.290432E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -10431,9 +10436,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178375542,
-        "g": 0.185074747,
-        "b": 0.238667876
+        "r": 0.178375453,
+        "g": 0.185074657,
+        "b": 0.238667786
       },
       "Tags": [
         "iii",
@@ -10486,9 +10491,9 @@
         "posX": -31.3077316,
         "posY": 0.9245064,
         "posZ": 13.5741577,
-        "rotX": 1.68344712E-07,
+        "rotX": 2.03805669E-07,
         "rotY": 359.984772,
-        "rotZ": -1.84518321E-08,
+        "rotZ": -2.52671043E-07,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -10502,9 +10507,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178375542,
-        "g": 0.185074747,
-        "b": 0.238667876
+        "r": 0.178375453,
+        "g": 0.185074657,
+        "b": 0.238667786
       },
       "Tags": [
         "iii",
@@ -10557,9 +10562,9 @@
         "posX": 8.597,
         "posY": 1.217087,
         "posZ": -15.735,
-        "rotX": -9.739761E-07,
-        "rotY": 0.302891135,
-        "rotZ": 2.530121E-07,
+        "rotX": -1.65423091E-06,
+        "rotY": 0.3028913,
+        "rotZ": 1.25225711E-06,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -10606,9 +10611,9 @@
         "posX": 11.2771072,
         "posY": 1.217087,
         "posZ": -15.6030607,
-        "rotX": -1.32659272E-06,
+        "rotX": -4.859449E-07,
         "rotY": 359.974,
-        "rotZ": 6.68092468E-07,
+        "rotZ": 7.405203E-07,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -10655,9 +10660,9 @@
         "posX": -22.8747044,
         "posY": 1.24448466,
         "posZ": -15.7752018,
-        "rotX": 6.237847E-07,
+        "rotX": -3.837005E-06,
         "rotY": 359.97348,
-        "rotZ": 2.288415E-07,
+        "rotZ": 1.22387507E-06,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -10672,7 +10677,7 @@
       },
       "ColorDiffuse": {
         "r": 0.764808357,
-        "g": 0.406380653,
+        "g": 0.406380564,
         "b": 0.7588346
       },
       "Tags": [
@@ -10704,8 +10709,8 @@
         "posX": -18.6338539,
         "posY": 1.20788991,
         "posZ": 16.3283043,
-        "rotX": 0.06377265,
-        "rotY": 359.934937,
+        "rotX": 0.06377187,
+        "rotY": 359.9346,
         "rotZ": 359.9352,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
@@ -10722,7 +10727,7 @@
       "ColorDiffuse": {
         "r": 0.9181184,
         "g": 0.633108139,
-        "b": 0.0847682
+        "b": 0.08476814
       },
       "Tags": [
         "bonus track",
@@ -10753,8 +10758,8 @@
         "posX": -15.8964939,
         "posY": 1.20463276,
         "posZ": 16.4853954,
-        "rotX": 0.06382083,
-        "rotY": 359.966461,
+        "rotX": 0.0638229,
+        "rotY": 359.9663,
         "rotZ": 359.935242,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
@@ -10771,7 +10776,7 @@
       "ColorDiffuse": {
         "r": 0.9181184,
         "g": 0.633108139,
-        "b": 0.0847682
+        "b": 0.08476814
       },
       "Tags": [
         "Orange",
@@ -10802,8 +10807,8 @@
         "posX": 12.7808952,
         "posY": 1.17019618,
         "posZ": 16.3537331,
-        "rotX": 0.06369152,
-        "rotY": 359.856842,
+        "rotX": 0.06369267,
+        "rotY": 359.856445,
         "rotZ": 359.93512,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
@@ -10820,7 +10825,7 @@
       "ColorDiffuse": {
         "r": 0.869338036,
         "g": 0.8619713,
-        "b": 0.110553451
+        "b": 0.110553361
       },
       "Tags": [
         "bonus track",
@@ -10848,11 +10853,11 @@
       "GUID": "633e86",
       "Name": "BlockSquare",
       "Transform": {
-        "posX": 15.4892721,
+        "posX": 15.489275,
         "posY": 1.16696548,
         "posZ": 16.5164528,
-        "rotX": 0.0638918653,
-        "rotY": 0.0307822526,
+        "rotX": 0.06388889,
+        "rotY": 0.03093827,
         "rotZ": 359.935333,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
@@ -10869,7 +10874,7 @@
       "ColorDiffuse": {
         "r": 0.869338036,
         "g": 0.8619713,
-        "b": 0.110553451
+        "b": 0.110553361
       },
       "Tags": [
         "summon gauge",
@@ -10900,9 +10905,9 @@
         "posX": -20.14124,
         "posY": 1.24448466,
         "posZ": -15.642724,
-        "rotX": -9.754764E-07,
-        "rotY": 0.0141117228,
-        "rotZ": -4.12018665E-07,
+        "rotX": -7.989218E-07,
+        "rotY": 0.0141116725,
+        "rotZ": 2.71840968E-08,
         "scaleX": 0.3544141,
         "scaleY": 0.350293338,
         "scaleZ": 0.350293338
@@ -10917,7 +10922,7 @@
       },
       "ColorDiffuse": {
         "r": 0.764808357,
-        "g": 0.406380624,
+        "g": 0.4063805,
         "b": 0.7588346
       },
       "Tags": [
@@ -11017,7 +11022,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.227236,
+        "r": 0.227235913,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -11049,9 +11054,9 @@
       "GUID": "23ec5f",
       "Name": "3DText",
       "Transform": {
-        "posX": -25.2615376,
-        "posY": 1.12699389,
-        "posZ": -15.6008692,
+        "posX": -25.26163,
+        "posY": 1.12698817,
+        "posZ": -15.6008768,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -11103,9 +11108,9 @@
       "GUID": "48b274",
       "Name": "3DText",
       "Transform": {
-        "posX": -28.3716965,
-        "posY": -0.906281769,
-        "posZ": -15.5751762,
+        "posX": -28.371788,
+        "posY": -0.9062875,
+        "posZ": -15.5751905,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -11178,7 +11183,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -11298,7 +11303,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.227235973,
+        "r": 0.227235883,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -11351,7 +11356,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.38310048
+        "b": 0.3831004
       },
       "Tags": [
         "destiny"
@@ -11421,7 +11426,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -11491,7 +11496,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -11540,9 +11545,9 @@
       "GUID": "975275",
       "Name": "3DText",
       "Transform": {
-        "posX": 2.62684274,
-        "posY": -0.850495338,
-        "posZ": -15.70098,
+        "posX": 2.626797,
+        "posY": -0.85050106,
+        "posZ": -15.7009935,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -11594,9 +11599,9 @@
       "GUID": "6c48c5",
       "Name": "3DText",
       "Transform": {
-        "posX": 5.94923973,
-        "posY": 1.23387611,
-        "posZ": -15.6704531,
+        "posX": 5.949194,
+        "posY": 1.23387039,
+        "posZ": -15.6704626,
         "rotX": 90.0,
         "rotY": 4.82967243E-06,
         "rotZ": 0.0,
@@ -11667,7 +11672,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.227235973,
+        "r": 0.227235883,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -11756,7 +11761,7 @@
         "posZ": 17.08,
         "rotX": -9.097785E-08,
         "rotY": 179.502274,
-        "rotZ": -1.45726542E-08,
+        "rotZ": -1.4572664E-08,
         "scaleX": 1.0,
         "scaleY": 1.0,
         "scaleZ": 1.0
@@ -11822,7 +11827,7 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.227235943,
+        "r": 0.227235854,
         "g": 0.533613443,
         "b": 0.9250871
       },
@@ -11875,7 +11880,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -11945,7 +11950,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -12015,7 +12020,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -12085,7 +12090,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -12155,7 +12160,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -12225,7 +12230,7 @@
       "ColorDiffuse": {
         "r": 0.7411765,
         "g": 0.670588255,
-        "b": 0.384305865
+        "b": 0.384305745
       },
       "Tags": [
         "destiny"
@@ -12278,7 +12283,7 @@
         "posY": 1.05182481,
         "posZ": 15.8841476,
         "rotX": 355.294983,
-        "rotY": 0.0503839441,
+        "rotY": 0.05038399,
         "rotZ": -0.0036996,
         "scaleX": 0.425228179,
         "scaleY": 1.0,
@@ -12295,7 +12300,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.38310048
+        "b": 0.3831004
       },
       "Tags": [
         "destiny"
@@ -12365,7 +12370,7 @@
       "ColorDiffuse": {
         "r": 0.740418136,
         "g": 0.668956161,
-        "b": 0.38310048
+        "b": 0.3831004
       },
       "Tags": [
         "destiny"
@@ -12414,8 +12419,8 @@
       "GUID": "50469c",
       "Name": "3DText",
       "Transform": {
-        "posX": 21.10146,
-        "posY": -0.8798254,
+        "posX": 21.10144,
+        "posY": -0.879824,
         "posZ": 16.2000866,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -12468,8 +12473,8 @@
       "GUID": "90d2d7",
       "Name": "3DText",
       "Transform": {
-        "posX": 17.76968,
-        "posY": 1.12022316,
+        "posX": 17.76966,
+        "posY": 1.120226,
         "posZ": 16.2000866,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -12522,8 +12527,8 @@
       "GUID": "0e1960",
       "Name": "3DText",
       "Transform": {
-        "posX": -10.0950823,
-        "posY": -0.879677534,
+        "posX": -10.0951281,
+        "posY": -0.8796761,
         "posZ": 16.2000866,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -12576,9 +12581,9 @@
       "GUID": "fb6f4f",
       "Name": "3DText",
       "Transform": {
-        "posX": -13.4215059,
-        "posY": 1.12035847,
-        "posZ": 16.2003765,
+        "posX": -13.4215975,
+        "posY": 1.12036133,
+        "posZ": 16.20038,
         "rotX": 90.0,
         "rotY": 180.0,
         "rotZ": 0.0,
@@ -12687,7 +12692,7 @@
         "posX": 32.79629,
         "posY": 1.13799858,
         "posZ": -2.59023285,
-        "rotX": 5.35263744E-08,
+        "rotX": 5.18507761E-08,
         "rotY": 180.0,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -15241,7 +15246,7 @@
         "posX": 29.78351,
         "posY": 1.426841,
         "posZ": -6.640177,
-        "rotX": -3.360721E-08,
+        "rotX": -5.085531E-09,
         "rotY": 179.999985,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -21561,7 +21566,7 @@
         "posX": 32.79629,
         "posY": 0.9695073,
         "posZ": -6.64022255,
-        "rotX": 3.998355E-08,
+        "rotX": -5.31963948E-08,
         "rotY": 180.0,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -21935,7 +21940,7 @@
         "posX": 35.752388,
         "posY": 1.13799858,
         "posZ": -2.59020233,
-        "rotX": 5.394336E-12,
+        "rotX": -1.2635395E-08,
         "rotY": 180.0,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -24477,9 +24482,9 @@
       "GUID": "85007e",
       "Name": "3DText",
       "Transform": {
-        "posX": 41.3467751,
-        "posY": 0.9703229,
-        "posZ": 0.7861295,
+        "posX": 41.3467941,
+        "posY": 0.970321536,
+        "posZ": 0.78612715,
         "rotX": 90.0,
         "rotY": 90.0,
         "rotZ": 0.0,
@@ -24577,8 +24582,8 @@
       "GUID": "7982cf",
       "Name": "3DText",
       "Transform": {
-        "posX": -3.61096215,
-        "posY": 0.961156964,
+        "posX": -3.611008,
+        "posY": 0.9611573,
         "posZ": 6.70033455,
         "rotX": 90.0,
         "rotY": 1.15148364E-12,
@@ -24893,11 +24898,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": 3.08901358,
-        "posY": 0.9245065,
+        "posY": 0.924506545,
         "posZ": 13.5741577,
-        "rotX": -2.03802233E-06,
+        "rotX": 1.90994024E-06,
         "rotY": 359.9758,
-        "rotZ": 1.65666052E-06,
+        "rotZ": 2.527685E-06,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -24911,9 +24916,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178375542,
-        "g": 0.185074747,
-        "b": 0.238667876
+        "r": 0.178375453,
+        "g": 0.185074657,
+        "b": 0.238667786
       },
       "Tags": [
         "ii",
@@ -24964,11 +24969,11 @@
       "Name": "Custom_Tile",
       "Transform": {
         "posX": 0.0655513853,
-        "posY": 0.924506664,
+        "posY": 0.924506545,
         "posZ": 13.5741577,
-        "rotX": -1.77003955E-07,
+        "rotX": -3.32363015E-06,
         "rotY": 0.0242130235,
-        "rotZ": 2.28438466E-06,
+        "rotZ": -9.139768E-07,
         "scaleX": 0.49,
         "scaleY": 1.0,
         "scaleZ": 0.49
@@ -24982,9 +24987,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.178375542,
-        "g": 0.185074747,
-        "b": 0.238667876
+        "r": 0.178375453,
+        "g": 0.185074657,
+        "b": 0.238667786
       },
       "Tags": [
         "iii",
@@ -25034,8 +25039,8 @@
       "GUID": "ae099f",
       "Name": "3DText",
       "Transform": {
-        "posX": 3.0879252,
-        "posY": 0.9301277,
+        "posX": 3.08787942,
+        "posY": 0.930130541,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -25088,8 +25093,8 @@
       "GUID": "7cacdd",
       "Name": "3DText",
       "Transform": {
-        "posX": 0.0679245,
-        "posY": 0.930125952,
+        "posX": 0.06787872,
+        "posY": 0.9301288,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -25142,8 +25147,8 @@
       "GUID": "709559",
       "Name": "3DText",
       "Transform": {
-        "posX": -28.2341137,
-        "posY": 0.930128038,
+        "posX": -28.23421,
+        "posY": 0.9301309,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -25196,8 +25201,8 @@
       "GUID": "beeb1d",
       "Name": "3DText",
       "Transform": {
-        "posX": -31.3140888,
-        "posY": 0.9301278,
+        "posX": -31.31418,
+        "posY": 0.930130661,
         "posZ": 15.8000221,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -25250,11 +25255,11 @@
       "GUID": "fdd082",
       "Name": "3DText",
       "Transform": {
-        "posX": -9.885162,
-        "posY": 0.9297478,
-        "posZ": -15.45923,
+        "posX": -9.885208,
+        "posY": 0.9297421,
+        "posZ": -15.4592409,
         "rotX": 90.0,
-        "rotY": 0.8935277,
+        "rotY": 0.8935281,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -25304,11 +25309,11 @@
       "GUID": "89fde0",
       "Name": "3DText",
       "Transform": {
-        "posX": -6.865151,
-        "posY": 0.929748535,
-        "posZ": -15.45923,
+        "posX": -6.8651967,
+        "posY": 0.9297428,
+        "posZ": -15.4592409,
         "rotX": 90.0,
-        "rotY": 0.8935277,
+        "rotY": 0.8935281,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -25358,11 +25363,11 @@
       "GUID": "ba874d",
       "Name": "3DText",
       "Transform": {
-        "posX": 21.296133,
-        "posY": 0.929747939,
-        "posZ": -15.45923,
+        "posX": 21.2961159,
+        "posY": 0.9297422,
+        "posZ": -15.4592409,
         "rotX": 90.0,
-        "rotY": 0.8935277,
+        "rotY": 0.8935281,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -25413,10 +25418,10 @@
       "Name": "3DText",
       "Transform": {
         "posX": 24.4969311,
-        "posY": 0.929748654,
-        "posZ": -15.45923,
+        "posY": 0.929742932,
+        "posZ": -15.4592409,
         "rotX": 90.0,
-        "rotY": 0.8935277,
+        "rotY": 0.8935281,
         "rotZ": 0.0,
         "scaleX": 1.0,
         "scaleY": 1.0,
@@ -25467,11 +25472,11 @@
       "Name": "Custom_Token",
       "Transform": {
         "posX": -31.7155151,
-        "posY": 1.07450664,
+        "posY": 1.07450569,
         "posZ": -16.49726,
-        "rotX": 2.6856058E-05,
-        "rotY": 179.47493,
-        "rotZ": -2.79221513E-05,
+        "rotX": 4.02692349E-05,
+        "rotY": 179.474945,
+        "rotZ": -2.556779E-06,
         "scaleX": 0.6078094,
         "scaleY": 1.0,
         "scaleZ": 0.6078094
@@ -25527,11 +25532,11 @@
       "Name": "Custom_Token",
       "Transform": {
         "posX": -31.70835,
-        "posY": 0.9745066,
+        "posY": 0.9745064,
         "posZ": -16.4977951,
-        "rotX": -3.80064421E-06,
+        "rotX": 2.132285E-06,
         "rotY": 179.993011,
-        "rotZ": -1.4712648E-06,
+        "rotZ": 1.78032758E-06,
         "scaleX": 0.6078094,
         "scaleY": 1.0,
         "scaleZ": 0.6078094
@@ -25545,9 +25550,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.344943732,
-        "g": 0.344943732,
-        "b": 0.344943732,
+        "r": 0.344943643,
+        "g": 0.344943643,
+        "b": 0.344943643,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -25603,9 +25608,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.344943732,
-        "g": 0.344943732,
-        "b": 0.344943732,
+        "r": 0.344943643,
+        "g": 0.344943643,
+        "b": 0.344943643,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -25661,9 +25666,9 @@
         "z": 0.0
       },
       "ColorDiffuse": {
-        "r": 0.344943732,
-        "g": 0.344943732,
-        "b": 0.344943732,
+        "r": 0.344943643,
+        "g": 0.344943643,
+        "b": 0.344943643,
         "a": 0.5882353
       },
       "LayoutGroupSortIndex": 0,
@@ -25757,11 +25762,11 @@
       "Name": "Custom_Dice",
       "Transform": {
         "posX": 26.41,
-        "posY": 1.38678658,
+        "posY": 1.38678646,
         "posZ": -2.72,
-        "rotX": 2.810694E-08,
-        "rotY": -4.74187623E-08,
-        "rotZ": 8.988311E-08,
+        "rotX": -7.7064675E-07,
+        "rotY": -5.2644257E-08,
+        "rotZ": -3.97448872E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -25867,9 +25872,9 @@
         "posX": 26.4102974,
         "posY": 1.38678658,
         "posZ": -3.76409841,
-        "rotX": -4.24791828E-08,
-        "rotY": 1.04313109E-07,
-        "rotZ": 4.81220539E-08,
+        "rotX": 4.8753666E-08,
+        "rotY": 9.66258E-08,
+        "rotZ": 6.845566E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -25974,10 +25979,10 @@
       "Transform": {
         "posX": 26.4100151,
         "posY": 1.38678658,
-        "posZ": -4.80000925,
-        "rotX": 1.51868437E-06,
-        "rotY": 0.004440668,
-        "rotZ": -1.19400181E-06,
+        "posZ": -4.80001,
+        "rotX": 5.397375E-06,
+        "rotY": 0.004733794,
+        "rotZ": -4.339731E-06,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26083,9 +26088,9 @@
         "posX": 26.41,
         "posY": 1.38678658,
         "posZ": -5.84,
-        "rotX": 4.058621E-08,
-        "rotY": 1.56510126E-07,
-        "rotZ": -4.65561776E-08,
+        "rotX": -3.0998164E-09,
+        "rotY": 1.7081382E-07,
+        "rotZ": -2.27697541E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -26189,10 +26194,10 @@
       "Name": "Custom_Dice",
       "Transform": {
         "posX": 22.8128529,
-        "posY": 1.38678658,
+        "posY": 1.3867867,
         "posZ": -4.77409458,
         "rotX": 270.0,
-        "rotY": -8.771689E-05,
+        "rotY": -8.992753E-05,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -26298,9 +26303,9 @@
       "Transform": {
         "posX": 22.8121262,
         "posY": 1.38678658,
-        "posZ": -3.76407647,
+        "posZ": -3.76407671,
         "rotX": 270.0,
-        "rotY": 0.340306878,
+        "rotY": 0.340306729,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -26405,10 +26410,10 @@
       "Name": "Custom_Dice",
       "Transform": {
         "posX": 22.81514,
-        "posY": 1.38678658,
+        "posY": 1.3867867,
         "posZ": -5.80409431,
         "rotX": 270.0,
-        "rotY": -3.40806728E-05,
+        "rotY": -3.57969438E-05,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -26514,9 +26519,9 @@
       "Transform": {
         "posX": 22.8128529,
         "posY": 1.38678646,
-        "posZ": -2.72409725,
+        "posZ": -2.72409749,
         "rotX": 270.0,
-        "rotY": 1.49921751,
+        "rotY": 1.49920559,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -26621,10 +26626,10 @@
       "Name": "Custom_Dice",
       "Transform": {
         "posX": 22.8106365,
-        "posY": 1.38678634,
+        "posY": 1.3867867,
         "posZ": -6.874093,
         "rotX": 270.0,
-        "rotY": -9.847514E-05,
+        "rotY": -0.00011106961,
         "rotZ": 0.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -26731,7 +26736,7 @@
         "posX": 24.0107155,
         "posY": 1.386787,
         "posZ": -2.72001672,
-        "rotX": -4.50812081E-07,
+        "rotX": 1.311528E-07,
         "rotY": 358.5006,
         "rotZ": 180.0,
         "scaleX": 1.40000057,
@@ -26839,7 +26844,7 @@
         "posX": 24.01,
         "posY": 1.386787,
         "posZ": -3.76,
-        "rotX": -9.44722444E-07,
+        "rotX": -2.71470384E-07,
         "rotY": 358.5006,
         "rotZ": 180.0,
         "scaleX": 1.40000057,
@@ -26947,7 +26952,7 @@
         "posX": 24.010025,
         "posY": 1.386787,
         "posZ": -4.800012,
-        "rotX": -1.60850914E-06,
+        "rotX": -1.25745927E-07,
         "rotY": 358.5006,
         "rotZ": 180.0,
         "scaleX": 1.40000057,
@@ -27053,10 +27058,10 @@
       "Name": "Custom_Dice",
       "Transform": {
         "posX": 24.01,
-        "posY": 1.38678694,
-        "posZ": -5.84,
-        "rotX": -1.19668439E-05,
-        "rotY": 358.500732,
+        "posY": 1.386787,
+        "posZ": -5.84000063,
+        "rotX": 4.74485842E-06,
+        "rotY": 358.5008,
         "rotZ": 180.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -27162,9 +27167,9 @@
       "Transform": {
         "posX": 24.01,
         "posY": 1.386787,
-        "posZ": -6.88000154,
-        "rotX": 3.19471633E-06,
-        "rotY": 358.5007,
+        "posZ": -6.880002,
+        "rotX": -7.522224E-06,
+        "rotY": 358.5008,
         "rotZ": 180.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -27271,9 +27276,9 @@
         "posX": 25.2,
         "posY": 1.38678658,
         "posZ": -2.72,
-        "rotX": 1.65062886E-07,
-        "rotY": 1.35933959E-07,
-        "rotZ": -1.01705623E-07,
+        "rotX": 2.25980983E-07,
+        "rotY": 1.33987186E-07,
+        "rotZ": -5.66255451E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27377,11 +27382,11 @@
       "Name": "Custom_Dice",
       "Transform": {
         "posX": 25.19821,
-        "posY": 1.38678658,
+        "posY": 1.38678646,
         "posZ": -3.75994039,
-        "rotX": -4.05340472E-08,
-        "rotY": 0.8381393,
-        "rotZ": -1.42319516E-08,
+        "rotX": -6.53417E-08,
+        "rotY": 0.838139653,
+        "rotZ": 2.63590579E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27485,11 +27490,11 @@
       "Name": "Custom_Dice",
       "Transform": {
         "posX": 25.20002,
-        "posY": 1.38678658,
-        "posZ": -4.80001259,
-        "rotX": 6.15473527E-06,
-        "rotY": 0.00435736449,
-        "rotZ": -3.272322E-05,
+        "posY": 1.3867867,
+        "posZ": -4.800014,
+        "rotX": -2.96293729E-06,
+        "rotY": 0.00468065031,
+        "rotZ": -2.998835E-05,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27595,9 +27600,9 @@
         "posX": 25.2,
         "posY": 1.38678658,
         "posZ": -5.84,
-        "rotX": 1.28787846E-07,
-        "rotY": 1.98778665E-07,
-        "rotZ": -3.917882E-08,
+        "rotX": -1.11861894E-07,
+        "rotY": 2.09623721E-07,
+        "rotZ": 3.173517E-08,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27701,11 +27706,11 @@
       "Name": "Custom_Dice",
       "Transform": {
         "posX": 25.2,
-        "posY": 1.38678646,
+        "posY": 1.38678658,
         "posZ": -6.88,
-        "rotX": -3.359372E-07,
-        "rotY": 1.33002274E-07,
-        "rotZ": 2.09195719E-07,
+        "rotX": 7.844861E-08,
+        "rotY": 1.469885E-07,
+        "rotZ": 1.62975951E-07,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -27811,8 +27816,8 @@
         "posX": 26.41,
         "posY": 1.386787,
         "posZ": -6.88,
-        "rotX": -4.23889617E-07,
-        "rotY": -2.57265782E-07,
+        "rotX": -7.301171E-08,
+        "rotY": -2.65655416E-07,
         "rotZ": 180.0,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
@@ -27919,9 +27924,9 @@
         "posX": 32.620388,
         "posY": 1.38678658,
         "posZ": -10.9261465,
-        "rotX": 1.38361244E-07,
-        "rotY": -5.636018E-05,
-        "rotZ": 3.01345437E-09,
+        "rotX": 1.40419985E-07,
+        "rotY": -5.635117E-05,
+        "rotZ": -8.363397E-09,
         "scaleX": 1.40000057,
         "scaleY": 1.40000057,
         "scaleZ": 1.40000057
@@ -28161,7 +28166,7 @@
         "posX": 29.7834988,
         "posY": 1.04171789,
         "posZ": -2.59017134,
-        "rotX": -1.05129736E-07,
+        "rotX": 4.55187745E-08,
         "rotY": 179.992188,
         "rotZ": 180.0,
         "scaleX": 1.25,
@@ -29462,9 +29467,9 @@
       "GUID": "a7ee19",
       "Name": "3DText",
       "Transform": {
-        "posX": -5.08636475,
-        "posY": 0.9610479,
-        "posZ": -3.995423,
+        "posX": -5.08641052,
+        "posY": 0.961045,
+        "posZ": -3.99543,
         "rotX": 90.0,
         "rotY": 1.15148364E-12,
         "rotZ": 0.0,
@@ -29516,9 +29521,9 @@
       "GUID": "adfe86",
       "Name": "3DText",
       "Transform": {
-        "posX": -2.005234,
-        "posY": 0.961047232,
-        "posZ": -3.99539137,
+        "posX": -2.00527978,
+        "posY": 0.9610444,
+        "posZ": -3.99539828,
         "rotX": 90.0,
         "rotY": 1.15148364E-12,
         "rotZ": 0.0,
@@ -29624,8 +29629,8 @@
       "GUID": "0a9eec",
       "Name": "3DText",
       "Transform": {
-        "posX": -8.2192955,
-        "posY": 0.961177945,
+        "posX": -8.219341,
+        "posY": 0.961179435,
         "posZ": 9.992508,
         "rotX": 90.0,
         "rotY": 0.0,
@@ -29678,9 +29683,9 @@
       "GUID": "0f525b",
       "Name": "3DText",
       "Transform": {
-        "posX": -2.00120568,
-        "posY": 0.49992466,
-        "posZ": -4.00015,
+        "posX": -2.00125146,
+        "posY": 0.4999218,
+        "posZ": -4.0001564,
         "rotX": 90.0,
         "rotY": -1.2541615E-07,
         "rotZ": 0.0,
@@ -29732,9 +29737,9 @@
       "GUID": "1117ad",
       "Name": "3DText",
       "Transform": {
-        "posX": -5.09121,
-        "posY": 0.499924451,
-        "posZ": -4.00015,
+        "posX": -5.09125566,
+        "posY": 0.4999216,
+        "posZ": -4.0001564,
         "rotX": 90.0,
         "rotY": -1.2541615E-07,
         "rotZ": 0.0,
@@ -29951,9 +29956,9 @@
         "posX": 31.8746014,
         "posY": 0.974506438,
         "posZ": -18.1235847,
-        "rotX": -5.749778E-07,
+        "rotX": -6.33740956E-06,
         "rotY": 180.0,
-        "rotZ": 1.89933061E-07,
+        "rotZ": 2.58124874E-06,
         "scaleX": 0.335945159,
         "scaleY": 1.0,
         "scaleZ": 0.335945159
@@ -30014,9 +30019,9 @@
         "posX": 31.8117027,
         "posY": 0.924506545,
         "posZ": -16.3919754,
-        "rotX": 5.67659733E-08,
+        "rotX": 9.84128263E-08,
         "rotY": 180.00145,
-        "rotZ": 2.31360686E-09,
+        "rotZ": -2.25639525E-08,
         "scaleX": 0.32,
         "scaleY": 1.0,
         "scaleZ": 0.32
@@ -30075,11 +30080,11 @@
       "Name": "Custom_Token_Stack",
       "Transform": {
         "posX": 28.83802,
-        "posY": 0.974506438,
+        "posY": 0.9745065,
         "posZ": -16.4715538,
-        "rotX": -5.637389E-06,
+        "rotX": -1.2392627E-06,
         "rotY": 180.00061,
-        "rotZ": 2.742175E-06,
+        "rotZ": -3.72419686E-06,
         "scaleX": 0.434757948,
         "scaleY": 1.0,
         "scaleZ": 0.434757948
@@ -30138,11 +30143,11 @@
       "Name": "Custom_Token_Stack",
       "Transform": {
         "posX": 35.4847946,
-        "posY": 0.9745065,
+        "posY": 0.974506557,
         "posZ": -17.1192875,
-        "rotX": 1.10997792E-06,
+        "rotX": -2.88084971E-06,
         "rotY": 179.963,
-        "rotZ": -3.7434047E-06,
+        "rotZ": 1.26948024E-07,
         "scaleX": 0.7152412,
         "scaleY": 1.0,
         "scaleZ": 0.7152412
@@ -30205,7 +30210,7 @@
           "Rotation": {
             "x": -1.981969E-05,
             "y": 359.909668,
-            "z": -6.887868E-06
+            "z": -6.88786531E-06
           },
           "Tags": [
             "water",
@@ -30241,7 +30246,7 @@
             "z": -0.70117563
           },
           "Rotation": {
-            "x": 2.29851648E-05,
+            "x": 2.298517E-05,
             "y": 359.9719,
             "z": 4.056455E-06
           },
@@ -30259,7 +30264,7 @@
       "GUID": "62d1f0",
       "Name": "3DText",
       "Transform": {
-        "posX": 2.17424035,
+        "posX": 2.17419457,
         "posY": 0.961132169,
         "posZ": 4.55878,
         "rotX": 90.0,
@@ -30538,9 +30543,9 @@
       "GUID": "ea859b",
       "Name": "3DText",
       "Transform": {
-        "posX": 5.94923973,
-        "posY": 0.96103555,
-        "posZ": -13.47017,
+        "posX": 5.949194,
+        "posY": 0.9610298,
+        "posZ": -13.47018,
         "rotX": 90.0,
         "rotY": 0.0,
         "rotZ": 0.0,
@@ -30592,9 +30597,9 @@
       "GUID": "516b1f",
       "Name": "3DText",
       "Transform": {
-        "posX": -25.2615376,
-        "posY": 0.9610364,
-        "posZ": -13.47017,
+        "posX": -25.26163,
+        "posY": 0.961030662,
+        "posZ": -13.47018,
         "rotX": 90.0,
         "rotY": 0.0,
         "rotZ": 0.0,
@@ -30646,9 +30651,9 @@
       "GUID": "6170a1",
       "Name": "3DText",
       "Transform": {
-        "posX": -13.4215059,
-        "posY": 0.9611831,
-        "posZ": 14.1401424,
+        "posX": -13.4215975,
+        "posY": 0.961185932,
+        "posZ": 14.1401529,
         "rotX": 90.0,
         "rotY": 180.0,
         "rotZ": 0.0,
@@ -30700,8 +30705,8 @@
       "GUID": "ef8ba4",
       "Name": "3DText",
       "Transform": {
-        "posX": 17.76968,
-        "posY": 0.9611827,
+        "posX": 17.76966,
+        "posY": 0.9611856,
         "posZ": 14.1400051,
         "rotX": 90.0,
         "rotY": 180.0,
@@ -30754,9 +30759,9 @@
       "GUID": "4f1cb7",
       "Name": "3DText",
       "Transform": {
-        "posX": -3.53071618,
-        "posY": 0.9611596,
-        "posZ": 11.20976,
+        "posX": -3.530762,
+        "posY": 0.9611613,
+        "posZ": 11.2097654,
         "rotX": 90.0,
         "rotY": 0.0,
         "rotZ": 0.0,
